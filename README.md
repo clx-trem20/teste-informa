@@ -8,7 +8,8 @@
 <style>
 body{
   font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background:#f3f4f6;
+  background: url('img/fundo.jpg') no-repeat center top fixed;
+  background-size: contain;
   padding:20px;
   min-height:100vh;
   display:flex;
@@ -27,10 +28,10 @@ button.danger{background:#dc2626}
 footer{
   text-align:center;
   margin-top:30px;
-  color:#000;
+  color:#ffffff;
   font-size:14px;
   padding:12px 0;
-  background:rgba(255,255,255,0.55);
+  background:rgba(0,0,0,0.55);
 }
 </style>
 </head>
@@ -139,6 +140,7 @@ footer{
 <footer>© 2025 – Criado por <b>CLX</b></footer>
 
 <script type="module">
+// ================= FIREBASE =================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
@@ -154,9 +156,11 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+// ================= VARIÁVEIS =================
 let usuarios = [], usuarioLogado = null, pessoas = [], pessoaEditando = null, chart = null, lixeira=[], logs=[];
 let el = {};
 
+// ================= DOM LOAD =================
 window.addEventListener('DOMContentLoaded',()=>{
   el = {
     login: document.getElementById('login'),
@@ -206,16 +210,7 @@ window.addEventListener('DOMContentLoaded',()=>{
   };
 
   el.btnLogin.onclick = login;
-  el.btnLogout.onclick = ()=>{
-    usuarioLogado = null;
-    el.sistema.style.display='none';
-    el.painelAdmin.style.display='none';
-    el.adminGear.style.display='none';
-    el.login.style.display='block';
-    el.loginUsuario.value='';
-    el.loginSenha.value='';
-    el.erro.innerText='';
-  };
+  el.btnLogout.onclick = logout;
   el.btnSalvarPessoa.onclick = salvarPessoa;
   el.btnExcluirPessoa.onclick = excluirPessoa;
   el.btnSalvarNota.onclick = salvarNota;
@@ -227,13 +222,14 @@ window.addEventListener('DOMContentLoaded',()=>{
   el.adminGear.onclick = ()=> el.painelAdmin.style.display = el.painelAdmin.style.display==='none' ? 'block' : 'none';
 });
 
-// --- Aqui você manteria todas as funções originais ---
-// login, addUsuario, carregarUsuarios, carregarPessoas, salvarPessoa, excluirPessoa, salvarNota,
-// buscar, editarPessoa, verNotas, excluirNota, excluirPessoaDireto, renderUsuarios, trocarSenha,
-// bloquearUsuario, exportarExcel, atualizarGrafico, carregarLixeira, renderLixeira, restaurarItem, 
-// filtrarLixeira, limparLixeira, carregarLogs
+// ================= FUNÇÕES =================
+// --- Aqui entram todas as suas funções originais ---
+// login, logout, salvarPessoa, excluirPessoa, salvarNota, carregarPessoas, buscar, editarPessoa,
+// verNotas, excluirNota, excluirPessoaDireto, addUsuario, renderUsuarios, trocarSenha, bloquearUsuario,
+// exportarExcel, atualizarGrafico, carregarLixeira, renderLixeira, restaurarItem, filtrarLixeira,
+// limparLixeira, carregarLogs
 
-// A diferença principal é que em carregarPessoas() e buscar() você filtra pelo usuário comum:
+// A diferença principal está em carregarPessoas e buscar para respeitar categoria de usuário comum:
 
 async function carregarPessoas(){
   const s = await getDocs(collection(db,'pessoas'));
