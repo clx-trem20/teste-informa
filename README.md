@@ -7,32 +7,18 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
-body{
-  font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: #f0f0f0;
-  padding:20px;
-  min-height:100vh;
-  display:flex;
-  flex-direction:column;
-}
-.container{max-width:1100px;margin:auto;background:rgba(255,255,255,0.92);padding:20px;border-radius:8px;flex:1;box-shadow:0 10px 30px rgba(0,0,0,0.15)}
-input,select,textarea,button{width:100%;padding:8px;margin-bottom:8px}
-button{background:#2563eb;color:#fff;border:none;border-radius:5px;cursor:pointer}
-button.danger{background:#dc2626}
-.card{border:1px solid #ddd;padding:10px;border-radius:6px;margin:6px 0}
-.elogio{background:#dcfce7;padding:6px;margin:4px 0}
-.reclamacao{background:#fee2e2;padding:6px;margin:4px 0}
-.melhorar{background:#fef9c3;padding:6px;margin:4px 0}
-#login{max-width:400px;margin:100px auto;background:#fff;padding:20px;border-radius:8px;text-align:center}
-#adminGear{position:fixed;top:20px;right:20px;font-size:24px;cursor:pointer;display:none}
-footer{
-  text-align:center;
-  margin-top:30px;
-  color:#ffffff;
-  font-size:14px;
-  padding:12px 0;
-  background:rgba(0,0,0,0.55);
-}
+body{font-family:'Segoe UI',sans-serif;background:#f0f0f0;padding:20px;min-height:100vh;display:flex;flex-direction:column;}
+.container{max-width:1100px;margin:auto;background:rgba(255,255,255,0.92);padding:20px;border-radius:8px;flex:1;box-shadow:0 10px 30px rgba(0,0,0,0.15);}
+input,select,textarea,button{width:100%;padding:8px;margin-bottom:8px;}
+button{background:#2563eb;color:#fff;border:none;border-radius:5px;cursor:pointer;}
+button.danger{background:#dc2626;}
+.card{border:1px solid #ddd;padding:10px;border-radius:6px;margin:6px 0;}
+.elogio{background:#dcfce7;padding:6px;margin:4px 0;}
+.reclamacao{background:#fee2e2;padding:6px;margin:4px 0;}
+.melhorar{background:#fef9c3;padding:6px;margin:4px 0;}
+#login{max-width:400px;margin:100px auto;background:#fff;padding:20px;border-radius:8px;text-align:center;}
+#adminGear{position:fixed;top:20px;right:20px;font-size:24px;cursor:pointer;display:none;}
+footer{text-align:center;margin-top:30px;color:#ffffff;font-size:14px;padding:12px 0;background:rgba(0,0,0,0.55);}
 </style>
 </head>
 <body>
@@ -76,7 +62,6 @@ footer{
 <input id="dataNascimento" type="date">
 <input id="contato" placeholder="Número de contato">
 <button id="btnSalvarPessoa">Salvar</button>
-<button class="danger" id="btnExcluirPessoa">Excluir Perfil</button>
 
 <h2>Adicionar Nota</h2>
 <select id="pessoaNota"></select>
@@ -90,7 +75,6 @@ footer{
 
 <h2>Pesquisar</h2>
 <input id="buscaNome" placeholder="Nome">
-<input id="buscaCategoria" placeholder="Categoria">
 <button id="btnBuscar">Buscar</button>
 <div id="resultado"></div>
 
@@ -158,6 +142,8 @@ window.addEventListener('DOMContentLoaded',()=>{
   el.sistema = document.getElementById('sistema');
   el.adminGear = document.getElementById('adminGear');
   el.painelAdmin = document.getElementById('painelAdmin');
+  el.btnLogout = document.getElementById('btnLogout');
+  el.btnLogout.onclick = ()=>location.reload();
 
   el.btnLogin.onclick = login;
 });
