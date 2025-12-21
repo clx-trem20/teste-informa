@@ -9,8 +9,7 @@
 <style>
 body{
   font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: url('img/fundo.jpg') no-repeat center top fixed;
-  background-size: cover;
+  background: #f0f0f0;
   padding:20px;
   min-height:100vh;
   display:flex;
@@ -161,7 +160,8 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-let usuarios = [], usuarioLogado = null, pessoas = [], pessoaEditando = null, chart = null, lixeira=[], logs=[];
+let usuarios = [], usuarioLogado = null, pessoas = [], pessoaEditando = null, chart = null;
+
 let el = {};
 
 window.addEventListener('DOMContentLoaded',()=> {
@@ -170,7 +170,6 @@ window.addEventListener('DOMContentLoaded',()=> {
     sistema: document.getElementById('sistema'),
     adminGear: document.getElementById('adminGear'),
     painelAdmin: document.getElementById('painelAdmin'),
-    erro: document.getElementById('erro'),
     loginUsuario: document.getElementById('loginUsuario'),
     loginSenha: document.getElementById('loginSenha'),
     btnLogin: document.getElementById('btnLogin'),
@@ -204,18 +203,10 @@ window.addEventListener('DOMContentLoaded',()=> {
     senhaUsuario: document.getElementById('senhaUsuario'),
     nivelUsuario: document.getElementById('nivelUsuario'),
     categoriaUsuario: document.getElementById('categoriaUsuario'),
-    listaLixeira: document.getElementById('listaLixeira'),
-    listaLogs: document.getElementById('listaLogs'),
-    filtroLixeiraUsuario: document.getElementById('filtroLixeiraUsuario'),
-    filtroLixeiraData: document.getElementById('filtroLixeiraData'),
-    btnFiltrarLixeira: document.getElementById('btnFiltrarLixeira'),
-    btnLimparLixeira: document.getElementById('btnLimparLixeira'),
-    toggleLogs: document.getElementById('toggleLogs'),
-    gavetaLogs: document.getElementById('gavetaLogs')
   };
 
   el.btnLogin.onclick = login;
-  el.btnLogout.onclick = ()=> {
+  el.btnLogout.onclick = ()=>{
     usuarioLogado = null;
     el.sistema.style.display='none';
     el.painelAdmin.style.display='none';
@@ -223,61 +214,33 @@ window.addEventListener('DOMContentLoaded',()=> {
     el.login.style.display='block';
     el.loginUsuario.value='';
     el.loginSenha.value='';
-    el.erro.innerText='';
   };
-  el.btnSalvarPessoa.onclick = salvarPessoa;
-  el.btnExcluirPessoa.onclick = excluirPessoa;
-  el.btnSalvarNota.onclick = salvarNota;
-  el.btnBuscar.onclick = buscar;
-  el.btnAddUsuario.onclick = addUsuario;
-  document.getElementById('btnExcel').onclick = exportarExcel;
-  el.btnFiltrarLixeira.onclick = filtrarLixeira;
-  el.btnLimparLixeira.onclick = limparLixeira;
-  el.adminGear.onclick = ()=> el.painelAdmin.style.display = el.painelAdmin.style.display==='none' ? 'block' : 'none';
-
-  if(el.toggleLogs){
-    el.toggleLogs.onclick = ()=> {
-      const aberto = el.gavetaLogs.style.display==='block';
-      el.gavetaLogs.style.display = aberto?'none':'block';
-      el.toggleLogs.innerText = aberto ? '📜 Logs de ações (Admin) ▼' : '📜 Logs de ações (Admin) ▲';
-    };
-  }
 });
 
 async function carregarUsuarios(){
   const s = await getDocs(collection(db,'usuarios'));
   usuarios = [];
   s.forEach(d=>usuarios.push({id:d.id,...d.data()}));
-  if(!usuarios.find(u=>u.usuario==='CLX')){
-    await addDoc(collection(db,'usuarios'),{usuario:'CLX',senha:'0207',nivel:'admin',ativo:true});
-  }
   renderUsuarios();
+}
+
+function renderUsuarios(){
+  if(!el.listaUsuarios) return;
+  el.listaUsuarios.innerHTML='';
+  usuarios.forEach(u=>{
+    el.listaUsuarios.innerHTML+=`<div class="card"><b>${u.usuario}</b> (${u.nivel})</div>`;
+  });
 }
 
 async function login(){
   await carregarUsuarios();
-
   const u = usuarios.find(u=>u.usuario.toLowerCase()===el.loginUsuario.value.toLowerCase() 
                              && u.senha===el.loginSenha.value);
-  if(!u){ el.erro.innerText='Login inválido'; return; }
-  if(u.ativo===false){ el.erro.innerText='Usuário bloqueado'; return; }
-
-  if(!u.categoria) u.categoria='';
-
+  if(!u){ alert('Login inválido'); return; }
   usuarioLogado = u;
   el.login.style.display='none';
   el.sistema.style.display='block';
-
-  if(u.nivel==='admin'){
-    el.adminGear.style.display='block';
-    carregarLixeira();
-    carregarLogs();
-  }
-
-  carregarPessoas();
 }
-
-// Outras funções (carregarPessoas, salvarPessoa, salvarNota, etc.) seguem o mesmo padrão que já ajustamos acima
 </script>
 </body>
 </html>
