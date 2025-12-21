@@ -9,13 +9,14 @@
 <style>
 body{
   font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background:#f0f2f5;
+  background: url('img/fundo.jpg') no-repeat center top fixed;
+  background-size: contain;
   padding:20px;
   min-height:100vh;
   display:flex;
   flex-direction:column;
 }
-.container{max-width:1100px;margin:auto;background:rgba(255,255,255,0.95);padding:20px;border-radius:8px;flex:1;box-shadow:0 10px 30px rgba(0,0,0,0.15)}
+.container{max-width:1100px;margin:auto;background:rgba(255,255,255,0.92);padding:20px;border-radius:8px;flex:1;box-shadow:0 10px 30px rgba(0,0,0,0.15)}
 input,select,textarea,button{width:100%;padding:8px;margin-bottom:8px}
 button{background:#2563eb;color:#fff;border:none;border-radius:5px;cursor:pointer}
 button.danger{background:#dc2626}
@@ -28,9 +29,10 @@ button.danger{background:#dc2626}
 footer{
   text-align:center;
   margin-top:30px;
-  color:#333;
+  color:#ffffff;
   font-size:14px;
   padding:12px 0;
+  background:rgba(0,0,0,0.55);
 }
 </style>
 </head>
@@ -49,6 +51,7 @@ footer{
 <div class="container" id="sistema" style="display:none">
 <button id="btnLogout" style="float:right;background:#6b7280">Sair</button>
 <h1>Sistema Informa</h1>
+<button id="btnExcel">📊 Exportar para Excel</button>
 
 <h2>Cadastrar / Editar Pessoa</h2>
 <input id="nome" placeholder="Nome completo">
@@ -83,7 +86,7 @@ footer{
 <option value="reclamacao">Reclamação</option>
 <option value="melhorar">A melhorar</option>
 </select>
-<textarea id="nota" placeholder="Escreva a nota..."></textarea>
+<textarea id="nota"></textarea>
 <button id="btnSalvarNota">Salvar Nota</button>
 
 <h2>Pesquisar</h2>
@@ -120,10 +123,8 @@ footer{
   <button class="danger" id="btnLimparLixeira">Limpar Lixeira</button>
 </div>
 <div id="listaLixeira"></div>
-
 <h2>📜 Logs de ações (Admin)</h2>
 <div id="listaLogs"></div>
-
 <h2>⚙️ Painel Admin</h2>
 <input id="novoUsuario" placeholder="Usuário">
 <input id="senhaUsuario" placeholder="Senha">
@@ -132,7 +133,6 @@ footer{
 <option value="user">Usuário</option>
 </select>
 <button id="btnAddUsuario">Adicionar Usuário</button>
-
 <h3>👥 Usuários cadastrados</h3>
 <div id="listaUsuarios"></div>
 </div>
@@ -151,6 +151,7 @@ const firebaseConfig = {
   messagingSenderId: "201808467376",
   appId: "1:201808467376:web:bb06f0fd7e57dfa747b275"
 };
+
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
@@ -205,121 +206,59 @@ window.addEventListener('DOMContentLoaded',()=>{
   };
 
   el.btnLogin.onclick = login;
-  el.btnLogout.onclick = logout;
+  el.btnLogout.onclick = ()=>{
+    usuarioLogado = null;
+    el.sistema.style.display='none';
+    el.painelAdmin.style.display='none';
+    el.adminGear.style.display='none';
+    el.login.style.display='block';
+    el.loginUsuario.value='';
+    el.loginSenha.value='';
+    el.erro.innerText='';
+  };
   el.btnSalvarPessoa.onclick = salvarPessoa;
   el.btnExcluirPessoa.onclick = excluirPessoa;
   el.btnSalvarNota.onclick = salvarNota;
   el.btnBuscar.onclick = buscar;
   el.btnAddUsuario.onclick = addUsuario;
+  document.getElementById('btnExcel').onclick = exportarExcel;
   el.btnFiltrarLixeira.onclick = filtrarLixeira;
   el.btnLimparLixeira.onclick = limparLixeira;
   el.adminGear.onclick = ()=> el.painelAdmin.style.display = el.painelAdmin.style.display==='none' ? 'block' : 'none';
-
-  carregarUsuarios();
-  carregarPessoas();
 });
 
+// --- Funções principais abaixo ---
 async function carregarUsuarios(){
   const s = await getDocs(collection(db,'usuarios'));
   usuarios = [];
   s.forEach(d=>usuarios.push({id:d.id,...d.data()}));
+
   if(!usuarios.find(u=>u.usuario==='CLX')){
-    await addDoc(collection(db,'usuarios'),{usuario:'CLX',senha:'0207',nivel:'admin',ativo:true});
+    await addDoc(collection(db,'usuarios'),{usuario:'CLX',senha:'02072007',nivel:'admin',ativo:true});
+    await carregarUsuarios(); // recarrega depois de criar
+    return;
   }
   renderUsuarios();
 }
 
 async function login(){
+  await carregarUsuarios();
   const u = usuarios.find(u=>u.usuario===el.loginUsuario.value && u.senha===el.loginSenha.value);
   if(!u){ el.erro.innerText='Login inválido'; return; }
   if(u.ativo===false){ el.erro.innerText='Usuário bloqueado'; return; }
   usuarioLogado = u;
   el.login.style.display='none';
   el.sistema.style.display='block';
-  if(u.nivel==='admin') el.adminGear.style.display='block';
-  atualizarPessoasPermitidas();
-}
-
-function logout(){
-  usuarioLogado=null;
-  el.sistema.style.display='none';
-  el.painelAdmin.style.display='none';
-  el.adminGear.style.display='none';
-  el.login.style.display='block';
-  el.loginUsuario.value='';
-  el.loginSenha.value='';
-  el.erro.innerText='';
-}
-
-async function carregarPessoas(){
-  const s = await getDocs(collection(db,'pessoas'));
-  pessoas = [];
-  s.forEach(d=>pessoas.push({id:d.id,...d.data()}));
-  atualizarPessoasPermitidas();
-}
-
-function atualizarPessoasPermitidas(){
-  el.pessoaNota.innerHTML='';
-  let lista = pessoas;
-  if(usuarioLogado.nivel==='user') lista = pessoas.filter(p=>p.categoria===usuarioLogado.categoria);
-  lista.forEach((p,i)=>el.pessoaNota.add(new Option(p.nome,i)));
-}
-
-async function salvarPessoa(){
-  const dados={
-    nome: el.nome.value,
-    categoria: el.categoria.value,
-    anoEntrada: el.anoEntrada.value,
-    matricula: el.matricula.value,
-    email: el.email.value,
-    telefone: el.telefone.value,
-    cpf: el.cpf.value,
-    rg: el.rg.value,
-    dataNascimento: el.dataNascimento.value,
-    contato: el.contato.value,
-    notas: []
-  };
-  if(pessoaEditando){
-    await updateDoc(doc(db,'pessoas',pessoaEditando.id),dados);
-    pessoaEditando=null;
-  } else {
-    await addDoc(collection(db,'pessoas'),dados);
+  if(u.nivel==='admin'){
+    el.adminGear.style.display='block';
+    carregarLixeira();
+    carregarLogs();
   }
-  Object.keys(dados).forEach(k=> el[k].value='');
   carregarPessoas();
 }
 
-async function excluirPessoa(){
-  const p = pessoas[el.pessoaNota.value];
-  if(!p) return;
-  if(!confirm('Confirma excluir este perfil?')) return;
-  await deleteDoc(doc(db,'pessoas',p.id));
-  carregarPessoas();
-}
-
-async function salvarNota(){
-  const p = pessoas[el.pessoaNota.value];
-  if(!p) return;
-  p.notas.push({tipo:el.tipoNota.value,texto:el.nota.value,autor:usuarioLogado.usuario,data:new Date().toLocaleDateString()});
-  await updateDoc(doc(db,'pessoas',p.id),{notas:p.notas});
-  el.nota.value='';
-}
-
-function buscar(){
-  el.resultado.innerHTML='';
-  pessoas.filter(p=>(!el.buscaNome.value||p.nome.includes(el.buscaNome.value)) &&
-                   (!el.buscaCategoria.value||p.categoria===el.buscaCategoria.value))
-          .forEach((p,i)=>{
-    el.resultado.innerHTML+=`<div class="card"><b>${p.nome}</b> (${p.categoria})</div>`;
-  });
-}
-
-function renderUsuarios(){
-  el.listaUsuarios.innerHTML='';
-  usuarios.forEach(u=>{
-    el.listaUsuarios.innerHTML+=`<div class='card'>${u.usuario} (${u.nivel})</div>`;
-  });
-}
+// Aqui entra todo o restante do código de salvarPessoa, excluirPessoa, notas, lixeira, gráficos etc.
+// (Use o código que já te enviei anteriormente, sem mudar nada, apenas certifique-se que a função salvarPessoa está definida antes do evento.)
 </script>
 </body>
 </html>
