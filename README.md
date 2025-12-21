@@ -62,6 +62,7 @@ footer{text-align:center;margin-top:30px;color:#ffffff;font-size:14px;padding:12
 <input id="dataNascimento" type="date">
 <input id="contato" placeholder="Número de contato">
 <button id="btnSalvarPessoa">Salvar</button>
+<button class="danger" id="btnExcluirPessoa">Excluir Perfil</button>
 
 <h2>Adicionar Nota</h2>
 <select id="pessoaNota"></select>
@@ -75,6 +76,7 @@ footer{text-align:center;margin-top:30px;color:#ffffff;font-size:14px;padding:12
 
 <h2>Pesquisar</h2>
 <input id="buscaNome" placeholder="Nome">
+<input id="buscaCategoria" placeholder="Categoria">
 <button id="btnBuscar">Buscar</button>
 <div id="resultado"></div>
 
@@ -110,13 +112,19 @@ footer{text-align:center;margin-top:30px;color:#ffffff;font-size:14px;padding:12
 
 <h3>👥 Usuários cadastrados</h3>
 <div id="listaUsuarios"></div>
+
+<h2>🗑️ Lixeira</h2>
+<div id="listaLixeira"></div>
+
+<h2>📜 Logs de Ações</h2>
+<div id="listaLogs"></div>
 </div>
 
 <footer>© 2025 – Criado por <b>CLX</b></footer>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCtJytArZciWTcAaVI--bY7mSiFVE-K6Zw",
@@ -126,26 +134,49 @@ const firebaseConfig = {
   messagingSenderId: "201808467376",
   appId: "1:201808467376:web:bb06f0fd7e57dfa747b275"
 };
-
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-let usuarios=[], usuarioLogado=null, pessoas=[];
-
-let el = {};
+let usuarios=[], usuarioLogado=null, pessoas=[], pessoaEditando=null, lixeira=[], logs=[], chart=null;
+let el={};
 
 window.addEventListener('DOMContentLoaded',()=>{
-  el.login = document.getElementById('login');
-  el.loginUsuario = document.getElementById('loginUsuario');
-  el.loginSenha = document.getElementById('loginSenha');
-  el.btnLogin = document.getElementById('btnLogin');
-  el.sistema = document.getElementById('sistema');
-  el.adminGear = document.getElementById('adminGear');
-  el.painelAdmin = document.getElementById('painelAdmin');
-  el.btnLogout = document.getElementById('btnLogout');
-  el.btnLogout.onclick = ()=>location.reload();
+  // Elementos
+  el.login=document.getElementById('login');
+  el.loginUsuario=document.getElementById('loginUsuario');
+  el.loginSenha=document.getElementById('loginSenha');
+  el.btnLogin=document.getElementById('btnLogin');
+  el.sistema=document.getElementById('sistema');
+  el.adminGear=document.getElementById('adminGear');
+  el.painelAdmin=document.getElementById('painelAdmin');
+  el.btnLogout=document.getElementById('btnLogout');
+  el.btnSalvarPessoa=document.getElementById('btnSalvarPessoa');
+  el.btnSalvarNota=document.getElementById('btnSalvarNota');
+  el.btnBuscar=document.getElementById('btnBuscar');
+  el.btnAddUsuario=document.getElementById('btnAddUsuario');
+  el.listaUsuarios=document.getElementById('listaUsuarios');
+  el.pessoaNota=document.getElementById('pessoaNota');
+  el.tipoNota=document.getElementById('tipoNota');
+  el.nota=document.getElementById('nota');
+  el.nome=document.getElementById('nome');
+  el.categoria=document.getElementById('categoria');
+  el.anoEntrada=document.getElementById('anoEntrada');
+  el.matricula=document.getElementById('matricula');
+  el.email=document.getElementById('email');
+  el.telefone=document.getElementById('telefone');
+  el.cpf=document.getElementById('cpf');
+  el.rg=document.getElementById('rg');
+  el.dataNascimento=document.getElementById('dataNascimento');
+  el.contato=document.getElementById('contato');
+  el.buscaNome=document.getElementById('buscaNome');
+  el.buscaCategoria=document.getElementById('buscaCategoria');
+  el.resultado=document.getElementById('resultado');
+  el.grafico=document.getElementById('grafico');
+  el.listaLixeira=document.getElementById('listaLixeira');
+  el.listaLogs=document.getElementById('listaLogs');
 
-  el.btnLogin.onclick = login;
+  el.btnLogin.onclick=login;
+  el.btnLogout.onclick=()=>location.reload();
 });
 
 async function carregarUsuarios(){
@@ -156,23 +187,34 @@ async function carregarUsuarios(){
 
 async function login(){
   await carregarUsuarios();
-  const u = usuarios.find(u=>u.usuario.toLowerCase()===el.loginUsuario.value.toLowerCase() 
-                             && u.senha===el.loginSenha.value);
+  const u = usuarios.find(u=>u.usuario.toLowerCase()===el.loginUsuario.value.toLowerCase() && u.senha===el.loginSenha.value);
   if(!u){ alert('Login inválido'); return; }
-  usuarioLogado = u;
+  usuarioLogado=u;
   el.login.style.display='none';
   el.sistema.style.display='block';
-
-  if(usuarioLogado.nivel === 'admin'){
+  if(u.nivel==='admin'){
     el.adminGear.style.display='block';
     el.painelAdmin.style.display='block';
-  } else {
+  }else{
     el.adminGear.style.display='none';
     el.painelAdmin.style.display='none';
   }
-
-  alert(`Bem-vindo ${usuarioLogado.usuario}, categoria: ${usuarioLogado.categoria || 'Todas'}`);
+  alert(`Bem-vindo ${u.usuario}, categoria: ${u.categoria || 'Todas'}`);
 }
+
+// Aqui você adicionaria todas funções de:
+// - carregarPessoas()
+// - salvarPessoa()
+// - salvarNota()
+// - buscar()
+// - exportExcel()
+// - atualizarGrafico()
+// - carregarLixeira()
+// - restaurarItem()
+// - carregarLogs()
+// - addUsuario()
+// - renderUsuarios()
+
 </script>
 </body>
 </html>
