@@ -1,4 +1,3 @@
-<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -56,7 +55,7 @@ footer{
 <h2>Cadastrar / Editar Pessoa</h2>
 <input id="nome" placeholder="Nome completo">
 <select id="categoria">
-  <option value="">-- Selecione Categoria --</option>
+  <option value="">Selecione a categoria</option>
   <option value="Meio Ambiente">Meio Ambiente</option>
   <option value="Linguagens">Linguagens</option>
   <option value="Comunicações">Comunicações</option>
@@ -91,19 +90,7 @@ footer{
 
 <h2>Pesquisar</h2>
 <input id="buscaNome" placeholder="Nome">
-<select id="buscaCategoria">
-  <option value="">-- Todas Categorias --</option>
-  <option value="Meio Ambiente">Meio Ambiente</option>
-  <option value="Linguagens">Linguagens</option>
-  <option value="Comunicações">Comunicações</option>
-  <option value="Edição de Vídeo">Edição de Vídeo</option>
-  <option value="Cultura">Cultura</option>
-  <option value="Secretaria">Secretaria</option>
-  <option value="Esportes">Esportes</option>
-  <option value="Presidência">Presidência</option>
-  <option value="Informações">Informações</option>
-  <option value="Designer">Designer</option>
-</select>
+<input id="buscaCategoria" placeholder="Categoria">
 <button id="btnBuscar">Buscar</button>
 <div id="resultado"></div>
 
@@ -123,14 +110,29 @@ footer{
   <button class="danger" id="btnLimparLixeira">Limpar Lixeira</button>
 </div>
 <div id="listaLixeira"></div>
+
 <h2>📜 Logs de ações (Admin)</h2>
 <div id="listaLogs"></div>
+
 <h2>⚙️ Painel Admin</h2>
 <input id="novoUsuario" placeholder="Usuário">
 <input id="senhaUsuario" placeholder="Senha">
 <select id="nivelUsuario">
 <option value="admin">Admin</option>
 <option value="user">Usuário</option>
+</select>
+<select id="categoriaUsuario">
+  <option value="">Sem categoria (Admin)</option>
+  <option value="Meio Ambiente">Meio Ambiente</option>
+  <option value="Linguagens">Linguagens</option>
+  <option value="Comunicações">Comunicações</option>
+  <option value="Edição de Vídeo">Edição de Vídeo</option>
+  <option value="Cultura">Cultura</option>
+  <option value="Secretaria">Secretaria</option>
+  <option value="Esportes">Esportes</option>
+  <option value="Presidência">Presidência</option>
+  <option value="Informações">Informações</option>
+  <option value="Designer">Designer</option>
 </select>
 <button id="btnAddUsuario">Adicionar Usuário</button>
 <h3>👥 Usuários cadastrados</h3>
@@ -197,6 +199,7 @@ window.addEventListener('DOMContentLoaded',()=>{
     novoUsuario: document.getElementById('novoUsuario'),
     senhaUsuario: document.getElementById('senhaUsuario'),
     nivelUsuario: document.getElementById('nivelUsuario'),
+    categoriaUsuario: document.getElementById('categoriaUsuario'),
     listaLixeira: document.getElementById('listaLixeira'),
     listaLogs: document.getElementById('listaLogs'),
     filtroLixeiraUsuario: document.getElementById('filtroLixeiraUsuario'),
@@ -224,55 +227,93 @@ window.addEventListener('DOMContentLoaded',()=>{
   document.getElementById('btnExcel').onclick = exportarExcel;
   el.btnFiltrarLixeira.onclick = filtrarLixeira;
   el.btnLimparLixeira.onclick = limparLixeira;
+  el.adminGear.onclick = ()=> el.painelAdmin.style.display = el.painelAdmin.style.display==='none' ? 'block' : 'none';
 });
 
-async function carregarUsuarios(){
-  const s = await getDocs(collection(db,'usuarios'));
-  usuarios = [];
-  s.forEach(d=>usuarios.push({id:d.id,...d.data()}));
-
-  if(!usuarios.find(u=>u.usuario==='CLX')){
-    await addDoc(collection(db,'usuarios'),{usuario:'CLX',senha:'02072007',nivel:'admin',ativo:true});
-  }
-  renderUsuarios();
-}
-
-async function login(){
-  await carregarUsuarios();
-  const u = usuarios.find(u=>u.usuario===el.loginUsuario.value && u.senha===el.loginSenha.value);
-  if(!u){ el.erro.innerText='Login inválido'; return; }
-  if(u.ativo===false){ el.erro.innerText='Usuário bloqueado'; return; }
-  usuarioLogado = u;
-  el.login.style.display='none';
-  el.sistema.style.display='block';
-
-  if(u.nivel==='admin'){
-    el.adminGear.style.display='block';
-    el.adminGear.onclick = ()=> {
-        el.painelAdmin.style.display = el.painelAdmin.style.display==='none' ? 'block' : 'none';
-        if(el.painelAdmin.style.display==='block'){
-          carregarLixeira();
-          carregarLogs();
-        }
-    };
-  }
-}
-
+// --- Funções principais com categoria ---
 async function addUsuario(){
   await addDoc(collection(db,'usuarios'),{
     usuario: el.novoUsuario.value,
     senha: el.senhaUsuario.value,
     nivel: el.nivelUsuario.value,
+    categoria: el.categoriaUsuario.value || '',
     ativo: true
   });
   el.novoUsuario.value='';
   el.senhaUsuario.value='';
-  renderUsuarios();
+  el.categoriaUsuario.value='';
+  carregarUsuarios();
 }
 
-// === Outras funções de pessoas, notas, lixeira, logs, gráfico, exportar Excel ===
-// Você pode copiar todo o código das funções do seu código base para cá, mantendo a lógica.
+async function carregarPessoas(){
+  const s = await getDocs(collection(db,'pessoas'));
+  pessoas = [];
+  s.forEach(d=>pessoas.push({id:d.id,...d.data()}));
+  el.pessoaNota.innerHTML='';
+  pessoas.forEach((p,i)=>{
+    if(usuarioLogado.nivel==='admin' || usuarioLogado.categoria === p.categoria){
+      el.pessoaNota.add(new Option(p.nome,i));
+    }
+  });
+  atualizarGrafico();
+}
 
+async function salvarPessoa(){
+  const dados={
+    nome: el.nome.value,
+    categoria: el.categoria.value,
+    anoEntrada: el.anoEntrada.value,
+    matricula: el.matricula.value,
+    email: el.email.value,
+    telefone: el.telefone.value,
+    cpf: el.cpf.value,
+    rg: el.rg.value,
+    dataNascimento: el.dataNascimento.value,
+    contato: el.contato.value
+  };
+  if(pessoaEditando){
+    await updateDoc(doc(db,'pessoas',pessoaEditando.id),dados);
+    pessoaEditando = null;
+  }else{
+    await addDoc(collection(db,'pessoas'),{...dados,notas:[]});
+  }
+  Object.keys(dados).forEach(k=> el[k].value='');
+  carregarPessoas();
+}
+
+async function salvarNota(){
+  const p = pessoas[el.pessoaNota.value];
+  if(!p) return;
+  if(usuarioLogado.nivel !== 'admin' && usuarioLogado.categoria !== p.categoria){
+    alert('Você só pode adicionar notas para pessoas da sua categoria.');
+    return;
+  }
+  p.notas.push({tipo:el.tipoNota.value,texto:el.nota.value,autor:usuarioLogado.usuario,data:new Date().toLocaleDateString()});
+  await updateDoc(doc(db,'pessoas',p.id),{notas:p.notas});
+  el.nota.value='';
+  atualizarGrafico();
+}
+
+function buscar(){
+  el.resultado.innerHTML='';
+  el.listaNotas.innerHTML='';
+  el.tituloNotas.style.display='none';
+
+  pessoas.filter(p=>
+    (!el.buscaNome.value || p.nome.includes(el.buscaNome.value)) &&
+    (!el.buscaCategoria.value || p.categoria.includes(el.buscaCategoria.value)) &&
+    (usuarioLogado.nivel==='admin' || usuarioLogado.categoria === p.categoria)
+  )
+  .forEach((p,i)=>{
+    el.resultado.innerHTML+=`
+      <div class='card'>
+        <b>${p.nome}</b> (${p.categoria})
+        <button onclick="editarPessoa(${i})">Editar</button>
+        <button onclick="verNotas(${i})">Ver notas</button>
+        ${usuarioLogado.nivel==='admin'?`<button class='danger' onclick="excluirPessoaDireto('${p.id}')">Excluir</button>`:''}
+      </div>`;
+  });
+}
 </script>
 </body>
 </html>
