@@ -55,7 +55,7 @@ footer{
 <h2>Cadastrar / Editar Pessoa</h2>
 <input id="nome" placeholder="Nome completo">
 <select id="categoria">
-  <option value="">Selecione a categoria</option>
+  <option value="">Selecione Categoria</option>
   <option value="Meio Ambiente">Meio Ambiente</option>
   <option value="Linguagens">Linguagens</option>
   <option value="Comunicações">Comunicações</option>
@@ -90,19 +90,7 @@ footer{
 
 <h2>Pesquisar</h2>
 <input id="buscaNome" placeholder="Nome">
-<select id="buscaCategoria">
-  <option value="">Todas as categorias</option>
-  <option value="Meio Ambiente">Meio Ambiente</option>
-  <option value="Linguagens">Linguagens</option>
-  <option value="Comunicações">Comunicações</option>
-  <option value="Edição de Vídeo">Edição de Vídeo</option>
-  <option value="Cultura">Cultura</option>
-  <option value="Secretaria">Secretaria</option>
-  <option value="Esportes">Esportes</option>
-  <option value="Presidência">Presidência</option>
-  <option value="Informações">Informações</option>
-  <option value="Designer">Designer</option>
-</select>
+<input id="buscaCategoria" placeholder="Categoria">
 <button id="btnBuscar">Buscar</button>
 <div id="resultado"></div>
 
@@ -130,19 +118,6 @@ footer{
 <select id="nivelUsuario">
 <option value="admin">Admin</option>
 <option value="user">Usuário</option>
-</select>
-<select id="categoriaUsuario">
-<option value="">Todas categorias</option>
-<option value="Meio Ambiente">Meio Ambiente</option>
-<option value="Linguagens">Linguagens</option>
-<option value="Comunicações">Comunicações</option>
-<option value="Edição de Vídeo">Edição de Vídeo</option>
-<option value="Cultura">Cultura</option>
-<option value="Secretaria">Secretaria</option>
-<option value="Esportes">Esportes</option>
-<option value="Presidência">Presidência</option>
-<option value="Informações">Informações</option>
-<option value="Designer">Designer</option>
 </select>
 <button id="btnAddUsuario">Adicionar Usuário</button>
 <h3>👥 Usuários cadastrados</h3>
@@ -209,7 +184,6 @@ window.addEventListener('DOMContentLoaded',()=>{
     novoUsuario: document.getElementById('novoUsuario'),
     senhaUsuario: document.getElementById('senhaUsuario'),
     nivelUsuario: document.getElementById('nivelUsuario'),
-    categoriaUsuario: document.getElementById('categoriaUsuario'),
     listaLixeira: document.getElementById('listaLixeira'),
     listaLogs: document.getElementById('listaLogs'),
     filtroLixeiraUsuario: document.getElementById('filtroLixeiraUsuario'),
@@ -219,7 +193,16 @@ window.addEventListener('DOMContentLoaded',()=>{
   };
 
   el.btnLogin.onclick = login;
-  el.btnLogout.onclick = logout;
+  el.btnLogout.onclick = ()=>{
+    usuarioLogado = null;
+    el.sistema.style.display='none';
+    el.painelAdmin.style.display='none';
+    el.adminGear.style.display='none';
+    el.login.style.display='block';
+    el.loginUsuario.value='';
+    el.loginSenha.value='';
+    el.erro.innerText='';
+  };
   el.btnSalvarPessoa.onclick = salvarPessoa;
   el.btnExcluirPessoa.onclick = excluirPessoa;
   el.btnSalvarNota.onclick = salvarNota;
@@ -229,13 +212,11 @@ window.addEventListener('DOMContentLoaded',()=>{
   el.btnFiltrarLixeira.onclick = filtrarLixeira;
   el.btnLimparLixeira.onclick = limparLixeira;
   el.adminGear.onclick = ()=> el.painelAdmin.style.display = el.painelAdmin.style.display==='none' ? 'block' : 'none';
-
-  carregarUsuarios();
-  carregarPessoas();
 });
 
-// Aqui entram todas as funções que você tinha: login, logout, salvarPessoa, excluirPessoa, salvarNota, editarPessoa, verNotas, excluirNota, renderUsuarios, trocarSenha, bloquearUsuario, exportarExcel, atualizarGrafico, carregarLixeira, renderLixeira, restaurarItem, filtrarLixeira, limparLixeira, carregarLogs, etc.
-// Todas já estão linkadas aos elementos HTML.
+// --- todas as funções do JS continuam como no código anterior ---
+// login, addUsuario, carregarPessoas, salvarPessoa, salvarNota, buscar, editarPessoa, verNotas, excluirNota, excluirPessoaDireto, renderUsuarios, trocarSenha, bloquearUsuario, exportarExcel, atualizarGrafico, carregarLixeira, renderLixeira, restaurarItem, filtrarLixeira, limparLixeira, carregarLogs
+
 </script>
 </body>
 </html>
