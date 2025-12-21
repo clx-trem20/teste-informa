@@ -102,20 +102,6 @@ footer{
 </div>
 
 <div id="painelAdmin" class="container" style="display:none">
-<h2>🗑️ Lixeira (Admin)</h2>
-<div class="card">
-  <input id="filtroLixeiraUsuario" placeholder="Filtrar por usuário">
-  <input id="filtroLixeiraData" type="date">
-  <button id="btnFiltrarLixeira">Filtrar</button>
-  <button class="danger" id="btnLimparLixeira">Limpar Lixeira</button>
-</div>
-<div id="listaLixeira"></div>
-
-<h2 style="cursor:pointer" id="toggleLogs">📜 Logs de ações (Admin) ▼</h2>
-<div id="gavetaLogs" style="display:none">
-  <div id="listaLogs"></div>
-</div>
-
 <h2>⚙️ Painel Admin</h2>
 <input id="novoUsuario" placeholder="Usuário">
 <input id="senhaUsuario" placeholder="Senha">
@@ -146,7 +132,7 @@ footer{
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCtJytArZciWTcAaVI--bY7mSiFVE-K6Zw",
@@ -160,76 +146,26 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-let usuarios = [], usuarioLogado = null, pessoas = [], pessoaEditando = null, chart = null;
+let usuarios=[], usuarioLogado=null, pessoas=[];
 
 let el = {};
 
-window.addEventListener('DOMContentLoaded',()=> {
-  el = {
-    login: document.getElementById('login'),
-    sistema: document.getElementById('sistema'),
-    adminGear: document.getElementById('adminGear'),
-    painelAdmin: document.getElementById('painelAdmin'),
-    loginUsuario: document.getElementById('loginUsuario'),
-    loginSenha: document.getElementById('loginSenha'),
-    btnLogin: document.getElementById('btnLogin'),
-    btnLogout: document.getElementById('btnLogout'),
-    btnSalvarPessoa: document.getElementById('btnSalvarPessoa'),
-    btnExcluirPessoa: document.getElementById('btnExcluirPessoa'),
-    btnSalvarNota: document.getElementById('btnSalvarNota'),
-    btnBuscar: document.getElementById('btnBuscar'),
-    btnAddUsuario: document.getElementById('btnAddUsuario'),
-    listaUsuarios: document.getElementById('listaUsuarios'),
-    nome: document.getElementById('nome'),
-    categoria: document.getElementById('categoria'),
-    anoEntrada: document.getElementById('anoEntrada'),
-    matricula: document.getElementById('matricula'),
-    email: document.getElementById('email'),
-    telefone: document.getElementById('telefone'),
-    cpf: document.getElementById('cpf'),
-    rg: document.getElementById('rg'),
-    dataNascimento: document.getElementById('dataNascimento'),
-    contato: document.getElementById('contato'),
-    pessoaNota: document.getElementById('pessoaNota'),
-    tipoNota: document.getElementById('tipoNota'),
-    nota: document.getElementById('nota'),
-    buscaNome: document.getElementById('buscaNome'),
-    buscaCategoria: document.getElementById('buscaCategoria'),
-    resultado: document.getElementById('resultado'),
-    grafico: document.getElementById('grafico'),
-    listaNotas: document.getElementById('listaNotas'),
-    tituloNotas: document.getElementById('tituloNotas'),
-    novoUsuario: document.getElementById('novoUsuario'),
-    senhaUsuario: document.getElementById('senhaUsuario'),
-    nivelUsuario: document.getElementById('nivelUsuario'),
-    categoriaUsuario: document.getElementById('categoriaUsuario'),
-  };
+window.addEventListener('DOMContentLoaded',()=>{
+  el.login = document.getElementById('login');
+  el.loginUsuario = document.getElementById('loginUsuario');
+  el.loginSenha = document.getElementById('loginSenha');
+  el.btnLogin = document.getElementById('btnLogin');
+  el.sistema = document.getElementById('sistema');
+  el.adminGear = document.getElementById('adminGear');
+  el.painelAdmin = document.getElementById('painelAdmin');
 
   el.btnLogin.onclick = login;
-  el.btnLogout.onclick = ()=>{
-    usuarioLogado = null;
-    el.sistema.style.display='none';
-    el.painelAdmin.style.display='none';
-    el.adminGear.style.display='none';
-    el.login.style.display='block';
-    el.loginUsuario.value='';
-    el.loginSenha.value='';
-  };
 });
 
 async function carregarUsuarios(){
   const s = await getDocs(collection(db,'usuarios'));
   usuarios = [];
   s.forEach(d=>usuarios.push({id:d.id,...d.data()}));
-  renderUsuarios();
-}
-
-function renderUsuarios(){
-  if(!el.listaUsuarios) return;
-  el.listaUsuarios.innerHTML='';
-  usuarios.forEach(u=>{
-    el.listaUsuarios.innerHTML+=`<div class="card"><b>${u.usuario}</b> (${u.nivel})</div>`;
-  });
 }
 
 async function login(){
@@ -240,6 +176,16 @@ async function login(){
   usuarioLogado = u;
   el.login.style.display='none';
   el.sistema.style.display='block';
+
+  if(usuarioLogado.nivel === 'admin'){
+    el.adminGear.style.display='block';
+    el.painelAdmin.style.display='block';
+  } else {
+    el.adminGear.style.display='none';
+    el.painelAdmin.style.display='none';
+  }
+
+  alert(`Bem-vindo ${usuarioLogado.usuario}, categoria: ${usuarioLogado.categoria || 'Todas'}`);
 }
 </script>
 </body>
