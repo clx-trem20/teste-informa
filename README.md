@@ -249,12 +249,14 @@ async function carregarPessoas(){
   const s = await getDocs(collection(db,'pessoas'));
   pessoas = [];
   s.forEach(d=>pessoas.push({id:d.id,...d.data()}));
+  
   el.pessoaNota.innerHTML='';
   pessoas.forEach((p,i)=>{
     if(usuarioLogado.nivel==='admin' || usuarioLogado.categoria === p.categoria){
       el.pessoaNota.add(new Option(p.nome,i));
     }
   });
+
   atualizarGrafico();
 }
 
@@ -284,10 +286,12 @@ async function salvarPessoa(){
 async function salvarNota(){
   const p = pessoas[el.pessoaNota.value];
   if(!p) return;
+
   if(usuarioLogado.nivel !== 'admin' && usuarioLogado.categoria !== p.categoria){
     alert('Você só pode adicionar notas para pessoas da sua categoria.');
     return;
   }
+
   p.notas.push({tipo:el.tipoNota.value,texto:el.nota.value,autor:usuarioLogado.usuario,data:new Date().toLocaleDateString()});
   await updateDoc(doc(db,'pessoas',p.id),{notas:p.notas});
   el.nota.value='';
