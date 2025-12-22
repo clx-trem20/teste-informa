@@ -45,7 +45,7 @@ hr { border: 0; border-top: 1px solid #eee; margin: 25px 0; }
 
 <div class="container" id="sistema" style="display:none">
     <div style="display:flex; justify-content:space-between; align-items:center">
-        <h1>Dashboard</h1>
+        <h1>Painel - Informa</h1>
         <button id="btnLogout" class="secondary" style="width:auto">Sair</button>
     </div>
     
