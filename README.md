@@ -1,9 +1,10 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Sistema Informa - Enterprise v4.1</title>
+<title>Sistema Informa - Enterprise v4.5 (Full)</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
 :root { --primary: #2563eb; --danger: #dc2626; --success: #10b981; --warning: #eab308; }
 body{ font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; padding:20px; min-height:100vh; display:flex; flex-direction:column; margin:0; }
@@ -15,7 +16,6 @@ button.danger { background: var(--danger); }
 button.secondary { background: #64748b; }
 button.success { background: var(--success); }
 .card { border:1px solid #eee; padding:15px; border-radius:8px; margin:10px 0; background:#fff; position: relative; }
-.bloqueado { background: #fee2e2 !important; border: 1px solid #ef4444; }
 .elogio { border-left:5px solid var(--success); background:#f0fdf4; padding:10px; margin:8px 0; position: relative; }
 .reclamacao { border-left:5px solid var(--danger); background:#fef2f2; padding:10px; margin:8px 0; position: relative; }
 .melhorar { border-left:5px solid var(--warning); background:#fffbeb; padding:10px; margin:8px 0; position: relative; }
@@ -48,6 +48,8 @@ hr { border: 0; border-top: 1px solid #eee; margin: 25px 0; }
         <button id="btnLogout" class="secondary" style="width:auto">Sair</button>
     </div>
     
+    <button id="btnExcel" style="width:auto; background:var(--success)">📊 Exportar Relatório Excel</button>
+
     <div id="secaoCadastro" style="display:none">
         <hr>
         <h3>📝 Cadastro de Colaboradores</h3>
@@ -67,9 +69,15 @@ hr { border: 0; border-top: 1px solid #eee; margin: 25px 0; }
                 <option value="Designer">Designer</option>
             </select>
             <input id="matricula" placeholder="Matrícula">
-            <input id="cpf" placeholder="CPF">
+            <input id="email" placeholder="E-mail">
+            <input id="telefone" placeholder="Telefone Principal" maxlength="15">
+            <input id="contato" placeholder="Número de Contato" maxlength="15">
+            <input id="cpf" placeholder="CPF" maxlength="14">
+            <input id="rg" placeholder="RG" maxlength="12">
+            <input id="dataNascimento" type="date">
+            <input id="anoEntrada" placeholder="Ano de Entrada">
         </div>
-        <button id="btnSalvarPessoa">Salvar Colaborador</button>
+        <button id="btnSalvarPessoa">Salvar e Atualizar</button>
     </div>
 
     <hr>
@@ -88,9 +96,9 @@ hr { border: 0; border-top: 1px solid #eee; margin: 25px 0; }
     <hr>
     <h3>🔍 Pesquisar</h3>
     <div class="grid-form">
-        <input id="buscaNome" placeholder="Nome do colaborador">
+        <input id="buscaNome" placeholder="Pesquisar por nome...">
     </div>
-    <button id="btnBuscar">Consultar</button>
+    <button id="btnBuscar">Consultar Base</button>
     <div id="resultado"></div>
 
     <div id="secaoNotas" style="display:none; margin-top:20px; background: #fff; padding: 15px; border: 1px solid #ddd; border-radius: 8px;">
@@ -111,7 +119,7 @@ hr { border: 0; border-top: 1px solid #eee; margin: 25px 0; }
 <div id="painelAdmin" class="container" style="display:none; border-top: 5px solid var(--primary)">
     <h2>⚙️ Gestão Administrativa</h2>
     <div class="card">
-        <h4>Criar Novo Usuário</h4>
+        <h4>Novo Usuário</h4>
         <input id="novoUsuario" placeholder="Username">
         <input id="senhaUsuario" type="password" placeholder="Senha">
         <select id="nivelUsuario">
@@ -119,14 +127,13 @@ hr { border: 0; border-top: 1px solid #eee; margin: 25px 0; }
             <option value="admin">Administrador</option>
         </select>
         <select id="categoriaUsuario">
-            <option value="">-- Categoria (Se for comum) --</option>
+            <option value="">-- Categoria (Se Comum) --</option>
             <option value="Meio Ambiente">Meio Ambiente</option>
             <option value="Designer">Designer</option>
+            <option value="Linguagens">Linguagens</option>
             </select>
-        <button id="btnAddUsuario">Adicionar Usuário</button>
+        <button id="btnAddUsuario">Adicionar Acesso</button>
     </div>
-
-    <h4>👥 Usuários do Sistema</h4>
     <div id="listaUsuarios"></div>
 </div>
 
@@ -152,11 +159,8 @@ let usuarios = [], usuarioLogado = null, pessoas = [], chart = null;
 let el = {};
 
 window.addEventListener('DOMContentLoaded', async () => {
-    const IDs = ['login','sistema','adminGear','painelAdmin','erro','loginUsuario','loginSenha','btnLogin','btnLogout','btnSalvarPessoa','btnSalvarNota','btnBuscar','btnAddUsuario','listaUsuarios','nome','categoria','matricula','cpf','pessoaNota','tipoNota','nota','buscaNome','resultado','grafico','listaNotas','secaoNotas','novoUsuario','senhaUsuario','nivelUsuario','categoriaUsuario','gavetaExcluidas','listaExcluidas'];
-    IDs.forEach(id => {
-        const element = document.getElementById(id);
-        if(element) el[id] = element;
-    });
+    const IDs = ['login','sistema','adminGear','painelAdmin','erro','loginUsuario','loginSenha','btnLogin','btnLogout','btnSalvarPessoa','btnSalvarNota','btnBuscar','btnAddUsuario','listaUsuarios','nome','categoria','matricula','email','telefone','contato','cpf','rg','dataNascimento','anoEntrada','pessoaNota','tipoNota','nota','buscaNome','resultado','grafico','listaNotas','secaoNotas','novoUsuario','senhaUsuario','nivelUsuario','categoriaUsuario','gavetaExcluidas','listaExcluidas','btnExcel'];
+    IDs.forEach(id => { if(document.getElementById(id)) el[id] = document.getElementById(id); });
 
     el.btnLogin.onclick = login;
     el.btnLogout.onclick = logout;
@@ -164,7 +168,13 @@ window.addEventListener('DOMContentLoaded', async () => {
     el.btnSalvarNota.onclick = salvarNota;
     el.btnBuscar.onclick = buscar;
     el.btnAddUsuario.onclick = addUsuario;
+    el.btnExcel.onclick = exportarExcel;
     el.adminGear.onclick = () => el.painelAdmin.style.display = el.painelAdmin.style.display==='none' ? 'block' : 'none';
+
+    // Máscaras
+    el.cpf.oninput = (e) => e.target.value = e.target.value.replace(/\D/g,"").replace(/(\d{3})(\d)/,"$1.$2").replace(/(\d{3})(\d)/,"$1.$2").replace(/(\d{3})(\d{1,2})$/,"$1-$2");
+    const maskTel = (e) => { let v = e.target.value.replace(/\D/g,""); v = v.replace(/^(\d{2})(\d)/g,"($1) $2"); v = v.replace(/(\d)(\d{4})$/,"$1-$2"); e.target.value = v; };
+    el.telefone.oninput = maskTel; el.contato.oninput = maskTel;
 
     await carregarUsuarios();
     const sessao = localStorage.getItem('sessao_informa');
@@ -179,8 +189,8 @@ async function login(){
     const s = await getDocs(collection(db, 'usuarios'));
     usuarios = s.docs.map(d => ({id: d.id, ...d.data()}));
     const u = usuarios.find(u => u.usuario === el.loginUsuario.value && u.senha === el.loginSenha.value);
-    if(!u) return el.erro.innerText = "Falha no login.";
-    if(!u.ativo) return el.erro.innerText = "Conta bloqueada.";
+    if(!u) return el.erro.innerText = "Usuário/Senha inválidos.";
+    if(!u.ativo) return el.erro.innerText = "Acesso Bloqueado.";
     localStorage.setItem('sessao_informa', JSON.stringify(u));
     entrarNoSistema(u);
 }
@@ -189,10 +199,7 @@ function entrarNoSistema(u) {
     usuarioLogado = u;
     el.login.style.display = 'none';
     el.sistema.style.display = 'block';
-    if(u.nivel === 'admin') {
-        el.adminGear.style.display = 'block';
-        el.secaoCadastro.style.display = 'block';
-    }
+    if(u.nivel === 'admin') { el.adminGear.style.display = 'block'; el.secaoCadastro.style.display = 'block'; }
     carregarPessoas();
 }
 
@@ -201,60 +208,31 @@ function logout() { localStorage.removeItem('sessao_informa'); location.reload()
 async function carregarUsuarios(){
     const s = await getDocs(collection(db, 'usuarios'));
     usuarios = s.docs.map(d => ({id: d.id, ...d.data()}));
-    renderUsuarios();
-}
-
-function renderUsuarios(){
     el.listaUsuarios.innerHTML = "";
     usuarios.forEach(u => {
-        el.listaUsuarios.innerHTML += `<div class="card ${u.ativo ? '' : 'bloqueado'}">
-            <b>${u.usuario}</b> (${u.nivel})
-            <button class="btn-mini" onclick="window.toggleUser('${u.id}', ${u.ativo})">Alterar Status</button>
-        </div>`;
+        el.listaUsuarios.innerHTML += `<div class="card ${u.ativo ? '' : 'bloqueado'}">${u.usuario} (${u.nivel}) <button class="btn-mini" onclick="window.toggleUser('${u.id}', ${u.ativo})">OnOff</button></div>`;
     });
 }
 
-// EXPOSTAS GLOBALMENTE PARA EVITAR ERROS DE DEFINIÇÃO
-window.toggleUser = async function(id, status){
-    await updateDoc(doc(db, 'usuarios', id), { ativo: !status });
-    carregarUsuarios();
-}
+window.toggleUser = async (id, status) => { await updateDoc(doc(db, 'usuarios', id), { ativo: !status }); carregarUsuarios(); };
 
 async function addUsuario(){
-    if(!el.novoUsuario.value || !el.senhaUsuario.value) return alert("Preencha tudo");
-    await addDoc(collection(db, 'usuarios'), { 
-        usuario: el.novoUsuario.value, 
-        senha: el.senhaUsuario.value, 
-        nivel: el.nivelUsuario.value, 
-        categoria: el.categoriaUsuario.value, 
-        ativo: true 
-    });
-    el.novoUsuario.value = ""; el.senhaUsuario.value = "";
-    carregarUsuarios();
+    await addDoc(collection(db, 'usuarios'), { usuario: el.novoUsuario.value, senha: el.senhaUsuario.value, nivel: el.nivelUsuario.value, categoria: el.categoriaUsuario.value, ativo: true });
+    el.novoUsuario.value = ""; el.senhaUsuario.value = ""; carregarUsuarios();
 }
 
 async function carregarPessoas(){
     const s = await getDocs(collection(db, 'pessoas'));
     pessoas = s.docs.map(d => ({id: d.id, ...d.data()}));
     el.pessoaNota.innerHTML = '<option value="">Selecione...</option>';
-    pessoas.forEach((p, i) => {
-        if(usuarioLogado.nivel === 'admin' || p.categoria === usuarioLogado.categoria)
-            el.pessoaNota.add(new Option(p.nome, i));
-    });
+    pessoas.forEach((p, i) => { if(usuarioLogado.nivel === 'admin' || p.categoria === usuarioLogado.categoria) el.pessoaNota.add(new Option(p.nome, i)); });
     atualizarGrafico();
 }
 
 async function salvarPessoa(){
-    await addDoc(collection(db, 'pessoas'), { 
-        nome: el.nome.value, 
-        categoria: el.categoria.value, 
-        matricula: el.matricula.value, 
-        cpf: el.cpf.value, 
-        notas: [], 
-        notasExcluidas: [] 
-    });
-    alert("Salvo!");
-    carregarPessoas();
+    const dados = { nome: el.nome.value, categoria: el.categoria.value, matricula: el.matricula.value, email: el.email.value, telefone: el.telefone.value, contato: el.contato.value, cpf: el.cpf.value, rg: el.rg.value, dataNascimento: el.dataNascimento.value, anoEntrada: el.anoEntrada.value, notas: [], notasExcluidas: [] };
+    await addDoc(collection(db, 'pessoas'), dados);
+    alert("Colaborador Cadastrado!"); carregarPessoas();
 }
 
 async function salvarNota(){
@@ -262,61 +240,53 @@ async function salvarNota(){
     const n = { tipo: el.tipoNota.value, texto: el.nota.value, autor: usuarioLogado.usuario, data: new Date().toLocaleDateString('pt-BR') };
     p.notas = p.notas || []; p.notas.push(n);
     await updateDoc(doc(db, 'pessoas', p.id), { notas: p.notas });
-    el.nota.value = ""; atualizarGrafico();
+    el.nota.value = ""; alert("Nota registrada!"); atualizarGrafico();
 }
 
-window.apagarNota = async function(pIdx, nIdx) {
-    const p = pessoas[pIdx];
-    const notaRemovida = p.notas.splice(nIdx, 1)[0];
-    p.notasExcluidas = p.notasExcluidas || [];
-    p.notasExcluidas.push(notaRemovida);
+window.apagarNota = async (pIdx, nIdx) => {
+    if(!confirm("Mover nota para gaveta?")) return;
+    const p = pessoas[pIdx]; const notaRemovida = p.notas.splice(nIdx, 1)[0];
+    p.notasExcluidas = p.notasExcluidas || []; p.notasExcluidas.push(notaRemovida);
     await updateDoc(doc(db, 'pessoas', p.id), { notas: p.notas, notasExcluidas: p.notasExcluidas });
-    verNotas(pIdx);
-    atualizarGrafico();
-}
+    window.verNotas(pIdx); atualizarGrafico();
+};
 
-window.restaurarNota = async function(pIdx, nIdx) {
-    const p = pessoas[pIdx];
-    const notaRestaurada = p.notasExcluidas.splice(nIdx, 1)[0];
+window.restaurarNota = async (pIdx, nIdx) => {
+    const p = pessoas[pIdx]; const notaRestaurada = p.notasExcluidas.splice(nIdx, 1)[0];
     p.notas.push(notaRestaurada);
     await updateDoc(doc(db, 'pessoas', p.id), { notas: p.notas, notasExcluidas: p.notasExcluidas });
-    verNotas(pIdx);
-    atualizarGrafico();
-}
+    window.verNotas(pIdx); atualizarGrafico();
+};
 
-window.verNotas = function(idx){
-    const p = pessoas[idx];
-    el.secaoNotas.style.display = 'block';
-    el.listaNotas.innerHTML = "";
+window.verNotas = (idx) => {
+    const p = pessoas[idx]; el.secaoNotas.style.display = 'block'; el.listaNotas.innerHTML = "";
     p.notas?.forEach((n, ni) => {
         const btn = usuarioLogado.nivel === 'admin' ? `<span class="btn-del-nota" onclick="window.apagarNota(${idx}, ${ni})">🗑️</span>` : '';
-        el.listaNotas.innerHTML += `<div class="${n.tipo}">${btn}<strong>${n.tipo}</strong>: ${n.texto}</div>`;
+        el.listaNotas.innerHTML += `<div class="${n.tipo}">${btn}<strong>${n.tipo.toUpperCase()}</strong>: ${n.texto} <br><small>${n.data} por ${n.autor}</small></div>`;
     });
     if(usuarioLogado.nivel === 'admin' && p.notasExcluidas?.length > 0) {
-        el.gavetaExcluidas.style.display = 'block';
-        el.listaExcluidas.innerHTML = "";
-        p.notasExcluidas.forEach((n, ni) => {
-            el.listaExcluidas.innerHTML += `<div class="excluida"><span class="btn-restore-nota" onclick="window.restaurarNota(${idx}, ${ni})">🔄</span>${n.texto}</div>`;
-        });
+        el.gavetaExcluidas.style.display = 'block'; el.listaExcluidas.innerHTML = "";
+        p.notasExcluidas.forEach((n, ni) => { el.listaExcluidas.innerHTML += `<div class="excluida"><span class="btn-restore-nota" onclick="window.restaurarNota(${idx}, ${ni})">🔄</span>${n.texto}</div>`; });
     } else { el.gavetaExcluidas.style.display = 'none'; }
-}
+};
 
 function buscar(){
     el.resultado.innerHTML = "";
     pessoas.filter(p => (usuarioLogado.nivel==='admin'||p.categoria===usuarioLogado.categoria) && p.nome.toLowerCase().includes(el.buscaNome.value.toLowerCase()))
-    .forEach(p => {
-        const idx = pessoas.indexOf(p);
-        el.resultado.innerHTML += `<div class="card">${p.nome} <button class="btn-mini" onclick="window.verNotas(${idx})">Ver</button></div>`;
-    });
+    .forEach(p => { const idx = pessoas.indexOf(p); el.resultado.innerHTML += `<div class="card">${p.nome} (${p.categoria}) <button class="btn-mini" onclick="window.verNotas(${idx})">Ver Histórico</button></div>`; });
 }
 
 function atualizarGrafico(){
     let e=0, r=0, m=0;
-    pessoas.filter(p => usuarioLogado.nivel==='admin'||p.categoria===usuarioLogado.categoria).forEach(p => {
-        p.notas?.forEach(n => { if(n.tipo==='elogio') e++; else if(n.tipo==='reclamacao') r++; else m++; });
-    });
+    pessoas.filter(p => usuarioLogado.nivel==='admin'||p.categoria===usuarioLogado.categoria).forEach(p => { p.notas?.forEach(n => { if(n.tipo==='elogio') e++; else if(n.tipo==='reclamacao') r++; else m++; }); });
     if(chart) chart.destroy();
     chart = new Chart(el.grafico, { type: 'pie', data: { labels: ['Elogios', 'Reclamações', 'Melhorar'], datasets: [{ data: [e,r,m], backgroundColor: ['#10b981','#ef4444','#f59e0b'] }] } });
+}
+
+function exportarExcel(){
+    const data = pessoas.map(p => ({ Nome: p.nome, Categoria: p.categoria, CPF: p.cpf, Elogios: p.notas?.filter(n=>n.tipo==='elogio').length || 0, Reclamacoes: p.notas?.filter(n=>n.tipo==='reclamacao').length || 0 }));
+    const ws = XLSX.utils.json_to_sheet(data); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Relatorio");
+    XLSX.writeFile(wb, "Sistema_Informa_Relatorio.xlsx");
 }
 </script>
 </body>
