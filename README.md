@@ -1,10 +1,9 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Sistema Informa - Enterprise v4</title>
+<title>Sistema Informa - Enterprise v4.1</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
 :root { --primary: #2563eb; --danger: #dc2626; --success: #10b981; --warning: #eab308; }
 body{ font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; padding:20px; min-height:100vh; display:flex; flex-direction:column; margin:0; }
@@ -49,8 +48,6 @@ hr { border: 0; border-top: 1px solid #eee; margin: 25px 0; }
         <button id="btnLogout" class="secondary" style="width:auto">Sair</button>
     </div>
     
-    <button id="btnExcel" style="width:auto; background:var(--success)">📊 Exportar Excel</button>
-
     <div id="secaoCadastro" style="display:none">
         <hr>
         <h3>📝 Cadastro de Colaboradores</h3>
@@ -70,15 +67,9 @@ hr { border: 0; border-top: 1px solid #eee; margin: 25px 0; }
                 <option value="Designer">Designer</option>
             </select>
             <input id="matricula" placeholder="Matrícula">
-            <input id="email" placeholder="E-mail">
-            <input id="telefone" placeholder="Telefone Principal" maxlength="15">
-            <input id="contato" placeholder="Número de Contato (Recado)" maxlength="15">
-            <input id="cpf" placeholder="CPF" maxlength="14">
-            <input id="rg" placeholder="RG" maxlength="12">
-            <input id="dataNascimento" type="date">
-            <input id="anoEntrada" placeholder="Ano de Entrada">
+            <input id="cpf" placeholder="CPF">
         </div>
-        <button id="btnSalvarPessoa">Salvar e Continuar Cadastrando</button>
+        <button id="btnSalvarPessoa">Salvar Colaborador</button>
     </div>
 
     <hr>
@@ -98,19 +89,6 @@ hr { border: 0; border-top: 1px solid #eee; margin: 25px 0; }
     <h3>🔍 Pesquisar</h3>
     <div class="grid-form">
         <input id="buscaNome" placeholder="Nome do colaborador">
-        <select id="buscaCategoria">
-            <option value="">Todas as Categorias</option>
-            <option value="Meio Ambiente">Meio Ambiente</option>
-            <option value="Linguagens">Linguagens</option>
-            <option value="Comunicações">Comunicações</option>
-            <option value="Edição de Vídeo">Edição de Vídeo</option>
-            <option value="Cultura">Cultura</option>
-            <option value="Secretaria">Secretaria</option>
-            <option value="Esportes">Esportes</option>
-            <option value="Presidência">Presidência</option>
-            <option value="Informações">Informações</option>
-            <option value="Designer">Designer</option>
-        </select>
     </div>
     <button id="btnBuscar">Consultar</button>
     <div id="resultado"></div>
@@ -143,16 +121,8 @@ hr { border: 0; border-top: 1px solid #eee; margin: 25px 0; }
         <select id="categoriaUsuario">
             <option value="">-- Categoria (Se for comum) --</option>
             <option value="Meio Ambiente">Meio Ambiente</option>
-            <option value="Linguagens">Linguagens</option>
-            <option value="Comunicações">Comunicações</option>
-            <option value="Edição de Vídeo">Edição de Vídeo</option>
-            <option value="Cultura">Cultura</option>
-            <option value="Secretaria">Secretaria</option>
-            <option value="Esportes">Esportes</option>
-            <option value="Presidência">Presidência</option>
-            <option value="Informações">Informações</option>
             <option value="Designer">Designer</option>
-        </select>
+            </select>
         <button id="btnAddUsuario">Adicionar Usuário</button>
     </div>
 
@@ -178,12 +148,15 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-let usuarios = [], usuarioLogado = null, pessoas = [], pessoaEditando = null, chart = null;
+let usuarios = [], usuarioLogado = null, pessoas = [], chart = null;
 let el = {};
 
 window.addEventListener('DOMContentLoaded', async () => {
-    const IDs = ['login','sistema','adminGear','painelAdmin','erro','loginUsuario','loginSenha','btnLogin','btnLogout','btnSalvarPessoa','btnSalvarNota','btnBuscar','btnAddUsuario','listaUsuarios','nome','categoria','anoEntrada','matricula','email','telefone','contato','cpf','rg','dataNascimento','pessoaNota','tipoNota','nota','buscaNome','buscaCategoria','resultado','grafico','listaNotas','secaoNotas','novoUsuario','senhaUsuario','nivelUsuario','categoriaUsuario','gavetaExcluidas','listaExcluidas'];
-    IDs.forEach(id => el[id] = document.getElementById(id));
+    const IDs = ['login','sistema','adminGear','painelAdmin','erro','loginUsuario','loginSenha','btnLogin','btnLogout','btnSalvarPessoa','btnSalvarNota','btnBuscar','btnAddUsuario','listaUsuarios','nome','categoria','matricula','cpf','pessoaNota','tipoNota','nota','buscaNome','resultado','grafico','listaNotas','secaoNotas','novoUsuario','senhaUsuario','nivelUsuario','categoriaUsuario','gavetaExcluidas','listaExcluidas'];
+    IDs.forEach(id => {
+        const element = document.getElementById(id);
+        if(element) el[id] = element;
+    });
 
     el.btnLogin.onclick = login;
     el.btnLogout.onclick = logout;
@@ -194,20 +167,19 @@ window.addEventListener('DOMContentLoaded', async () => {
     el.adminGear.onclick = () => el.painelAdmin.style.display = el.painelAdmin.style.display==='none' ? 'block' : 'none';
 
     await carregarUsuarios();
-    const sessaoSalva = localStorage.getItem('sessao_informa');
-    if(sessaoSalva) {
-        const uSalvo = JSON.parse(sessaoSalva);
-        const uValido = usuarios.find(x => x.usuario === uSalvo.usuario && x.senha === uSalvo.senha);
-        if(uValido && uValido.ativo) entrarNoSistema(uValido);
+    const sessao = localStorage.getItem('sessao_informa');
+    if(sessao) {
+        const u = JSON.parse(sessao);
+        const valid = usuarios.find(x => x.usuario === u.usuario && x.senha === u.senha);
+        if(valid && valid.ativo) entrarNoSistema(valid);
     }
 });
 
 async function login(){
     const s = await getDocs(collection(db, 'usuarios'));
-    usuarios = [];
-    s.forEach(d => usuarios.push({id: d.id, ...d.data()}));
+    usuarios = s.docs.map(d => ({id: d.id, ...d.data()}));
     const u = usuarios.find(u => u.usuario === el.loginUsuario.value && u.senha === el.loginSenha.value);
-    if(!u) return el.erro.innerText = "Usuário ou senha incorretos.";
+    if(!u) return el.erro.innerText = "Falha no login.";
     if(!u.ativo) return el.erro.innerText = "Conta bloqueada.";
     localStorage.setItem('sessao_informa', JSON.stringify(u));
     entrarNoSistema(u);
@@ -217,9 +189,10 @@ function entrarNoSistema(u) {
     usuarioLogado = u;
     el.login.style.display = 'none';
     el.sistema.style.display = 'block';
-    if(u.nivel === 'admin') el.adminGear.style.display = 'block';
-    if(u.nivel === 'admin') document.getElementById('secaoCadastro').style.display = 'block';
-    else { el.buscaCategoria.value = u.categoria; el.buscaCategoria.disabled = true; }
+    if(u.nivel === 'admin') {
+        el.adminGear.style.display = 'block';
+        el.secaoCadastro.style.display = 'block';
+    }
     carregarPessoas();
 }
 
@@ -227,8 +200,7 @@ function logout() { localStorage.removeItem('sessao_informa'); location.reload()
 
 async function carregarUsuarios(){
     const s = await getDocs(collection(db, 'usuarios'));
-    usuarios = [];
-    s.forEach(d => usuarios.push({id: d.id, ...d.data()}));
+    usuarios = s.docs.map(d => ({id: d.id, ...d.data()}));
     renderUsuarios();
 }
 
@@ -237,20 +209,33 @@ function renderUsuarios(){
     usuarios.forEach(u => {
         el.listaUsuarios.innerHTML += `<div class="card ${u.ativo ? '' : 'bloqueado'}">
             <b>${u.usuario}</b> (${u.nivel})
-            <button class="btn-mini" onclick="toggleUser('${u.id}', ${u.ativo})">${u.ativo ? 'Bloquear' : 'Ativar'}</button>
+            <button class="btn-mini" onclick="window.toggleUser('${u.id}', ${u.ativo})">Alterar Status</button>
         </div>`;
     });
 }
 
+// EXPOSTAS GLOBALMENTE PARA EVITAR ERROS DE DEFINIÇÃO
 window.toggleUser = async function(id, status){
     await updateDoc(doc(db, 'usuarios', id), { ativo: !status });
     carregarUsuarios();
 }
 
+async function addUsuario(){
+    if(!el.novoUsuario.value || !el.senhaUsuario.value) return alert("Preencha tudo");
+    await addDoc(collection(db, 'usuarios'), { 
+        usuario: el.novoUsuario.value, 
+        senha: el.senhaUsuario.value, 
+        nivel: el.nivelUsuario.value, 
+        categoria: el.categoriaUsuario.value, 
+        ativo: true 
+    });
+    el.novoUsuario.value = ""; el.senhaUsuario.value = "";
+    carregarUsuarios();
+}
+
 async function carregarPessoas(){
     const s = await getDocs(collection(db, 'pessoas'));
-    pessoas = [];
-    s.forEach(d => pessoas.push({id: d.id, ...d.data()}));
+    pessoas = s.docs.map(d => ({id: d.id, ...d.data()}));
     el.pessoaNota.innerHTML = '<option value="">Selecione...</option>';
     pessoas.forEach((p, i) => {
         if(usuarioLogado.nivel === 'admin' || p.categoria === usuarioLogado.categoria)
@@ -260,9 +245,15 @@ async function carregarPessoas(){
 }
 
 async function salvarPessoa(){
-    const dados = { nome: el.nome.value, categoria: el.categoria.value, matricula: el.matricula.value, email: el.email.value, telefone: el.telefone.value, contato: el.contato.value, cpf: el.cpf.value, rg: el.rg.value, dataNascimento: el.dataNascimento.value, anoEntrada: el.anoEntrada.value, notas: [], notasExcluidas: [] };
-    await addDoc(collection(db, 'pessoas'), dados);
-    alert("Cadastrado!");
+    await addDoc(collection(db, 'pessoas'), { 
+        nome: el.nome.value, 
+        categoria: el.categoria.value, 
+        matricula: el.matricula.value, 
+        cpf: el.cpf.value, 
+        notas: [], 
+        notasExcluidas: [] 
+    });
+    alert("Salvo!");
     carregarPessoas();
 }
 
@@ -271,12 +262,10 @@ async function salvarNota(){
     const n = { tipo: el.tipoNota.value, texto: el.nota.value, autor: usuarioLogado.usuario, data: new Date().toLocaleDateString('pt-BR') };
     p.notas = p.notas || []; p.notas.push(n);
     await updateDoc(doc(db, 'pessoas', p.id), { notas: p.notas });
-    el.nota.value = ""; alert("Nota salva!"); atualizarGrafico();
+    el.nota.value = ""; atualizarGrafico();
 }
 
-// GAVETA: MOVER PARA EXCLUÍDAS
 window.apagarNota = async function(pIdx, nIdx) {
-    if(!confirm("Mover para a gaveta de excluídas?")) return;
     const p = pessoas[pIdx];
     const notaRemovida = p.notas.splice(nIdx, 1)[0];
     p.notasExcluidas = p.notasExcluidas || [];
@@ -286,7 +275,6 @@ window.apagarNota = async function(pIdx, nIdx) {
     atualizarGrafico();
 }
 
-// GAVETA: RESTAURAR DA GAVETA
 window.restaurarNota = async function(pIdx, nIdx) {
     const p = pessoas[pIdx];
     const notaRestaurada = p.notasExcluidas.splice(nIdx, 1)[0];
@@ -296,37 +284,30 @@ window.restaurarNota = async function(pIdx, nIdx) {
     atualizarGrafico();
 }
 
-function buscar(){
-    el.resultado.innerHTML = "";
-    pessoas.filter(p => (usuarioLogado.nivel==='admin'||p.categoria===usuarioLogado.categoria) && p.nome.toLowerCase().includes(el.buscaNome.value.toLowerCase()))
-    .forEach(p => {
-        const idx = pessoas.indexOf(p);
-        el.resultado.innerHTML += `<div class="card"><b>${p.nome}</b> <button class="btn-mini" onclick="verNotas(${idx})">Ver Histórico</button></div>`;
-    });
-}
-
 window.verNotas = function(idx){
     const p = pessoas[idx];
     el.secaoNotas.style.display = 'block';
     el.listaNotas.innerHTML = "";
     p.notas?.forEach((n, ni) => {
-        const btn = usuarioLogado.nivel === 'admin' ? `<span class="btn-del-nota" onclick="apagarNota(${idx}, ${ni})">🗑️</span>` : '';
-        el.listaNotas.innerHTML += `<div class="${n.tipo}">${btn}<strong>${n.tipo.toUpperCase()}</strong>: ${n.texto}<br><small>${n.data}</small></div>`;
+        const btn = usuarioLogado.nivel === 'admin' ? `<span class="btn-del-nota" onclick="window.apagarNota(${idx}, ${ni})">🗑️</span>` : '';
+        el.listaNotas.innerHTML += `<div class="${n.tipo}">${btn}<strong>${n.tipo}</strong>: ${n.texto}</div>`;
     });
-
-    // Mostrar Gaveta apenas para Admin
     if(usuarioLogado.nivel === 'admin' && p.notasExcluidas?.length > 0) {
         el.gavetaExcluidas.style.display = 'block';
         el.listaExcluidas.innerHTML = "";
         p.notasExcluidas.forEach((n, ni) => {
-            el.listaExcluidas.innerHTML += `<div class="excluida">
-                <span class="btn-restore-nota" onclick="restaurarNota(${idx}, ${ni})" title="Restaurar">🔄</span>
-                <strong>${n.tipo.toUpperCase()}</strong>: ${n.texto} (Excluída)
-            </div>`;
+            el.listaExcluidas.innerHTML += `<div class="excluida"><span class="btn-restore-nota" onclick="window.restaurarNota(${idx}, ${ni})">🔄</span>${n.texto}</div>`;
         });
-    } else {
-        el.gavetaExcluidas.style.display = 'none';
-    }
+    } else { el.gavetaExcluidas.style.display = 'none'; }
+}
+
+function buscar(){
+    el.resultado.innerHTML = "";
+    pessoas.filter(p => (usuarioLogado.nivel==='admin'||p.categoria===usuarioLogado.categoria) && p.nome.toLowerCase().includes(el.buscaNome.value.toLowerCase()))
+    .forEach(p => {
+        const idx = pessoas.indexOf(p);
+        el.resultado.innerHTML += `<div class="card">${p.nome} <button class="btn-mini" onclick="window.verNotas(${idx})">Ver</button></div>`;
+    });
 }
 
 function atualizarGrafico(){
