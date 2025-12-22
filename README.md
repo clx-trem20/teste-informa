@@ -1,26 +1,26 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Sistema Informa - Enterprise v5.1 (Restaurado)</title>
+<title>Sistema Informa - Enterprise v5.2</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
-:root { --primary: #2563eb; --danger: #dc2626; --success: #10b981; --warning: #eab308; }
+:root { --primary: #2563eb; --danger: #dc2626; --success: #10b981; --warning: #eab308; --gray: #64748b; }
 body{ font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; padding:20px; min-height:100vh; display:flex; flex-direction:column; margin:0; }
 .container{ max-width:1100px; margin:20px auto; background:#fff; padding:25px; border-radius:12px; flex:1; box-shadow:0 10px 25px rgba(0,0,0,0.05); }
 input, select, textarea, button { width:100%; padding:10px; margin-bottom:10px; border:1px solid #ddd; border-radius:6px; box-sizing: border-box; font-size: 14px; }
 button { background: var(--primary); color:#fff; border:none; cursor:pointer; font-weight:bold; transition: 0.2s; }
 button:hover { opacity: 0.9; transform: translateY(-1px); }
 button.danger { background: var(--danger); }
-button.secondary { background: #64748b; }
+button.secondary { background: var(--gray); }
 button.success { background: var(--success); }
 .card { border:1px solid #eee; padding:15px; border-radius:8px; margin:10px 0; background:#fff; position: relative; }
 .bloqueado { background: #fee2e2 !important; border: 1px solid #ef4444; }
 .elogio { background:#f0fdf4; border-left:5px solid var(--success); padding:10px; margin:8px 0; position: relative;}
 .reclamacao { background:#fef2f2; border-left:5px solid var(--danger); padding:10px; margin:8px 0; position: relative;}
 .melhorar { background:#fffbeb; border-left:5px solid var(--warning); padding:10px; margin:8px 0; position: relative;}
-.excluida { border-left:5px solid #64748b; background:#f1f5f9; opacity: 0.7; padding:10px; margin:8px 0; position: relative; font-style: italic; }
+.excluida { border-left:5px solid var(--gray); background:#f1f5f9; opacity: 0.7; padding:10px; margin:8px 0; position: relative; font-style: italic; }
 .btn-del-nota { position: absolute; top: 5px; right: 10px; color: var(--danger); cursor: pointer; font-weight: bold; font-size: 18px; }
 .btn-restore-nota { position: absolute; top: 5px; right: 35px; color: var(--success); cursor: pointer; font-size: 18px; }
 #login { max-width:400px; margin:100px auto; background:#fff; padding:40px; border-radius:12px; text-align:center; box-shadow:0 15px 35px rgba(0,0,0,0.1); }
@@ -45,11 +45,11 @@ hr { border: 0; border-top: 1px solid #eee; margin: 25px 0; }
 
 <div class="container" id="sistema" style="display:none">
     <div style="display:flex; justify-content:space-between; align-items:center">
-        <h1>Painel - Informa</h1>
+        <h1>Dashboard</h1>
         <button id="btnLogout" class="secondary" style="width:auto">Sair</button>
     </div>
     
-    <button id="btnExcel" style="width:auto; background:var(--success)">📊 Exportar Relatório Excel</button>
+    <button id="btnExcel" style="width:auto; background:var(--success)">📊 Exportar Excel (Por Categorias)</button>
 
     <div id="secaoCadastro" style="display:none">
         <hr>
@@ -119,7 +119,7 @@ hr { border: 0; border-top: 1px solid #eee; margin: 25px 0; }
         <h3 id="tituloNotas">Histórico</h3>
         <div id="listaNotas"></div>
         <div id="gavetaExcluidas" style="margin-top:20px; border-top: 1px dashed #ccc; padding-top:10px; display:none;">
-            <h4 style="color:#64748b">📁 Gaveta de Notas Excluídas (Admin)</h4>
+            <h4 style="color:var(--gray)">📁 Gaveta de Notas Excluídas (Admin)</h4>
             <div id="listaExcluidas"></div>
         </div>
     </div>
@@ -190,21 +190,22 @@ window.addEventListener('DOMContentLoaded', async () => {
     const IDs = ['login','sistema','adminGear','painelAdmin','erro','loginUsuario','loginSenha','btnLogin','btnLogout','btnSalvarPessoa','btnSalvarNota','btnBuscar','btnAddUsuario','listaUsuarios','nome','categoria','anoEntrada','matricula','email','telefone','contato','cpf','rg','dataNascimento','pessoaNota','tipoNota','nota','buscaNome','buscaCategoria','resultado','grafico','listaNotas','secaoNotas','novoUsuario','senhaUsuario','nivelUsuario','categoriaUsuario','listaLixeira','btnLimparLixeira','btnExcel','gavetaExcluidas','listaExcluidas','secaoCadastro'];
     IDs.forEach(id => el[id] = document.getElementById(id));
 
-    el.btnLogin.onclick = login;
-    el.btnLogout.onclick = logout;
-    el.btnSalvarPessoa.onclick = salvarPessoa;
-    el.btnSalvarNota.onclick = salvarNota;
-    el.btnBuscar.onclick = buscar;
-    el.btnAddUsuario.onclick = addUsuario;
-    el.btnLimparLixeira.onclick = limparLixeira;
+    if(el.btnLogin) el.btnLogin.onclick = login;
+    if(el.btnLogout) el.btnLogout.onclick = logout;
+    if(el.btnSalvarPessoa) el.btnSalvarPessoa.onclick = salvarPessoa;
+    if(el.btnSalvarNota) el.btnSalvarNota.onclick = salvarNota;
+    if(el.btnBuscar) el.btnBuscar.onclick = buscar;
+    if(el.btnAddUsuario) el.btnAddUsuario.onclick = addUsuario;
+    if(el.btnLimparLixeira) el.btnLimparLixeira.onclick = limparLixeira;
     if(el.btnExcel) el.btnExcel.onclick = exportarExcel;
-    el.adminGear.onclick = () => el.painelAdmin.style.display = el.painelAdmin.style.display==='none' ? 'block' : 'none';
+    if(el.adminGear) el.adminGear.onclick = () => el.painelAdmin.style.display = el.painelAdmin.style.display==='none' ? 'block' : 'none';
 
     // Máscaras
-    el.cpf.oninput = (e) => e.target.value = e.target.value.replace(/\D/g,"").replace(/(\d{3})(\d)/,"$1.$2").replace(/(\d{3})(\d)/,"$1.$2").replace(/(\d{3})(\d{1,2})$/,"$1-$2");
-    el.rg.oninput = (e) => e.target.value = e.target.value.replace(/\D/g,"").replace(/(\d{2})(\d)/,"$1.$2").replace(/(\d{3})(\d)/,"$1.$2").replace(/(\d{3})(\d{1,2})$/,"$1-$2");
     const maskTel = (e) => { let v = e.target.value.replace(/\D/g,""); v = v.replace(/^(\d{2})(\d)/g,"($1) $2"); v = v.replace(/(\d)(\d{4})$/,"$1-$2"); e.target.value = v; };
-    el.telefone.oninput = maskTel; el.contato.oninput = maskTel;
+    if(el.cpf) el.cpf.oninput = (e) => e.target.value = e.target.value.replace(/\D/g,"").replace(/(\d{3})(\d)/,"$1.$2").replace(/(\d{3})(\d)/,"$1.$2").replace(/(\d{3})(\d{1,2})$/,"$1-$2");
+    if(el.rg) el.rg.oninput = (e) => e.target.value = e.target.value.replace(/\D/g,"").replace(/(\d{2})(\d)/,"$1.$2").replace(/(\d{3})(\d)/,"$1.$2").replace(/(\d{3})(\d{1,2})$/,"$1-$2");
+    if(el.telefone) el.telefone.oninput = maskTel;
+    if(el.contato) el.contato.oninput = maskTel;
 
     await carregarUsuarios();
     const sessao = localStorage.getItem('sessao_informa');
@@ -244,15 +245,17 @@ function logout() { localStorage.removeItem('sessao_informa'); location.reload()
 async function carregarUsuarios(){
     const s = await getDocs(collection(db, 'usuarios'));
     usuarios = s.docs.map(d => ({id: d.id, ...d.data()}));
-    el.listaUsuarios.innerHTML = "";
-    usuarios.forEach(u => {
-        el.listaUsuarios.innerHTML += `<div class="card ${u.ativo ? '' : 'bloqueado'}">
-            <b>${u.usuario}</b> (${u.nivel})
-            <button class="btn-mini success" onclick="window.resetarSenha('${u.id}', '${u.usuario}')">Reset Senha</button>
-            <button class="btn-mini secondary" onclick="window.toggleUser('${u.id}', ${u.ativo})">${u.ativo ? 'Bloquear' : 'Ativar'}</button>
-            ${u.usuario !== 'CLX' ? `<button class="danger btn-mini" onclick="window.excluirUsuario('${u.id}')">Excluir</button>` : ''}
-        </div>`;
-    });
+    if(el.listaUsuarios){
+        el.listaUsuarios.innerHTML = "";
+        usuarios.forEach(u => {
+            el.listaUsuarios.innerHTML += `<div class="card ${u.ativo ? '' : 'bloqueado'}">
+                <b>${u.usuario}</b> (${u.nivel})
+                <button class="btn-mini success" onclick="window.resetarSenha('${u.id}', '${u.usuario}')">Reset Senha</button>
+                <button class="btn-mini secondary" onclick="window.toggleUser('${u.id}', ${u.ativo})">${u.ativo ? 'Bloquear' : 'Ativar'}</button>
+                ${u.usuario !== 'CLX' ? `<button class="danger btn-mini" onclick="window.excluirUsuario('${u.id}')">Excluir</button>` : ''}
+            </div>`;
+        });
+    }
 }
 
 window.resetarSenha = async (id, nome) => {
@@ -265,11 +268,13 @@ window.excluirUsuario = async (id) => { if(confirm("Excluir acesso?")) { await d
 async function carregarPessoas(){
     const s = await getDocs(collection(db, 'pessoas'));
     pessoas = s.docs.map(d => ({id: d.id, ...d.data()}));
-    el.pessoaNota.innerHTML = '<option value="">Selecione...</option>';
-    pessoas.forEach((p, i) => {
-        if(usuarioLogado.nivel === 'admin' || p.categoria === usuarioLogado.categoria)
-            el.pessoaNota.add(new Option(p.nome, i));
-    });
+    if(el.pessoaNota){
+        el.pessoaNota.innerHTML = '<option value="">Selecione...</option>';
+        pessoas.forEach((p, i) => {
+            if(usuarioLogado.nivel === 'admin' || p.categoria === usuarioLogado.categoria)
+                el.pessoaNota.add(new Option(p.nome, i));
+        });
+    }
     atualizarGrafico();
 }
 
@@ -283,6 +288,7 @@ async function salvarPessoa(){
 
 async function salvarNota(){
     const p = pessoas[el.pessoaNota.value];
+    if(!p) return alert("Selecione um colaborador");
     const n = { tipo: el.tipoNota.value, texto: el.nota.value, autor: usuarioLogado.usuario, data: new Date().toLocaleDateString('pt-BR') };
     p.notas = p.notas || []; p.notas.push(n);
     await updateDoc(doc(db, 'pessoas', p.id), { notas: p.notas });
@@ -315,7 +321,7 @@ window.verNotas = function(idx){
     if(usuarioLogado.nivel === 'admin' && p.notasExcluidas?.length > 0) {
         el.gavetaExcluidas.style.display = 'block'; el.listaExcluidas.innerHTML = "";
         p.notasExcluidas.forEach((n, ni) => { el.listaExcluidas.innerHTML += `<div class="excluida"><span class="btn-restore-nota" onclick="window.restaurarNota(${idx}, ${ni})">🔄</span>${n.texto}</div>`; });
-    } else { el.gavetaExcluidas.style.display = 'none'; }
+    } else if(el.gavetaExcluidas) { el.gavetaExcluidas.style.display = 'none'; }
 }
 
 function buscar(){
@@ -336,8 +342,8 @@ function buscar(){
 
 window.excluirPessoa = async (id) => {
     if(confirm("Mover para lixeira?")){
-        const p = pessoas.find(x => x.id === id);
-        await addDoc(collection(db, 'lixeira'), { dados: p, data: new Date().toLocaleString() });
+        const p = parseInt(pessoas.findIndex(x => x.id === id));
+        await addDoc(collection(db, 'lixeira'), { dados: pessoas[p], data: new Date().toLocaleString() });
         await deleteDoc(doc(db, 'pessoas', id)); carregarPessoas(); buscar();
     }
 };
@@ -350,8 +356,10 @@ window.editarPessoa = (idx) => {
 
 async function carregarLixeira(){
     const s = await getDocs(collection(db, 'lixeira'));
-    el.listaLixeira.innerHTML = "<b>Lixeira:</b>";
-    s.forEach(d => el.listaLixeira.innerHTML += `<div>- ${d.data().dados?.nome}</div>`);
+    if(el.listaLixeira){
+        el.listaLixeira.innerHTML = "<b>Lixeira:</b>";
+        s.forEach(d => el.listaLixeira.innerHTML += `<div>- ${d.data().dados?.nome}</div>`);
+    }
 }
 
 async function limparLixeira(){
@@ -372,19 +380,36 @@ function atualizarGrafico(){
             p.notas?.forEach(n => { if(n.tipo==='elogio') e++; else if(n.tipo==='reclamacao') r++; else m++; });
     });
     if(chart) chart.destroy();
-    chart = new Chart(el.grafico, { type: 'pie', data: { labels: ['Elogios', 'Reclamações', 'Melhorar'], datasets: [{ data: [e,r,m], backgroundColor: ['#10b981','#ef4444','#f59e0b'] }] } });
+    if(el.grafico) chart = new Chart(el.grafico, { type: 'pie', data: { labels: ['Elogios', 'Reclamações', 'Melhorar'], datasets: [{ data: [e,r,m], backgroundColor: ['#10b981','#ef4444','#f59e0b'] }] } });
 }
 
-function exportarExcel(){
-    const data = pessoas.map(p => ({ 
-        Nome: p.nome, Categoria: p.categoria, CPF: p.cpf, RG: p.rg, 
-        Elogios: p.notas?.filter(n=>n.tipo==='elogio').length || 0, 
-        Reclamacoes: p.notas?.filter(n=>n.tipo==='reclamacao').length || 0 
-    }));
-    const ws = XLSX.utils.json_to_sheet(data);
+function exportarExcel() {
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Relatório");
-    XLSX.writeFile(wb, "Relatorio_Informa_v5.xlsx");
+    const categoriasUnicas = [...new Set(pessoas.map(p => p.categoria))].filter(c => c);
+
+    categoriasUnicas.forEach(cat => {
+        const pessoasDaCategoria = pessoas.filter(p => p.categoria === cat);
+        const data = pessoasDaCategoria.map(p => ({
+            "Nome": p.nome,
+            "Matrícula": p.matricula,
+            "CPF": p.cpf,
+            "RG": p.rg,
+            "E-mail": p.email,
+            "Telefone": p.telefone,
+            "Elogios": p.notas?.filter(n => n.tipo === 'elogio').length || 0,
+            "Reclamações": p.notas?.filter(n => n.tipo === 'reclamacao').length || 0,
+            "A Melhorar": p.notas?.filter(n => n.tipo === 'melhorar').length || 0
+        }));
+        const ws = XLSX.utils.json_to_sheet(data);
+        XLSX.utils.book_append_sheet(wb, ws, cat.substring(0, 31));
+    });
+
+    if (categoriasUnicas.length === 0) {
+        const wsVazia = XLSX.utils.json_to_sheet([{ Aviso: "Nenhum dado encontrado" }]);
+        XLSX.utils.book_append_sheet(wb, wsVazia, "Vazio");
+    }
+
+    XLSX.writeFile(wb, "Relatorio_Informa_Categorizado.xlsx");
 }
 </script>
 </body>
