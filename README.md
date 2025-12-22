@@ -1,7 +1,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Sistema Informa - Versão Final</title>
+<title>Sistema Informa - Pro v3</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -14,7 +14,9 @@ button { background: var(--primary); color:#fff; border:none; cursor:pointer; fo
 button:hover { opacity: 0.9; transform: translateY(-1px); }
 button.danger { background: var(--danger); }
 button.secondary { background: #64748b; }
+button.success { background: var(--success); }
 .card { border:1px solid #eee; padding:15px; border-radius:8px; margin:10px 0; background:#fff; position: relative; }
+.bloqueado { background: #fee2e2 !important; border: 1px solid #ef4444; }
 .elogio { background:#f0fdf4; border-left:5px solid var(--success); padding:10px; margin:8px 0; }
 .reclamacao { background:#fef2f2; border-left:5px solid var(--danger); padding:10px; margin:8px 0; }
 .melhorar { background:#fffbeb; border-left:5px solid var(--warning); padding:10px; margin:8px 0; }
@@ -147,14 +149,13 @@ hr { border: 0; border-top: 1px solid #eee; margin: 25px 0; }
         <button id="btnAddUsuario">Adicionar Usuário</button>
     </div>
 
-    <h4>👥 Usuários Ativos</h4>
+    <h4>👥 Usuários do Sistema</h4>
     <div id="listaUsuarios"></div>
 
     <hr>
-    <h4>🗑️ Lixeira / 📜 Logs</h4>
+    <h4>🗑️ Lixeira de Itens Excluídos</h4>
     <button class="danger btn-mini" id="btnLimparLixeira">Esvaziar Lixeira</button>
-    <div id="listaLixeira" style="font-size: 11px;"></div>
-    <div id="listaLogs" style="font-size: 11px; margin-top: 10px; max-height: 150px; overflow: auto;"></div>
+    <div id="listaLixeira" style="font-size: 11px; margin-top:10px;"></div>
 </div>
 
 <footer>© 2025 – Sistema Informa – Criado por <b>CLX</b></footer>
@@ -179,7 +180,7 @@ let usuarios = [], usuarioLogado = null, pessoas = [], pessoaEditando = null, ch
 let el = {};
 
 window.addEventListener('DOMContentLoaded', () => {
-    const IDs = ['login','sistema','adminGear','painelAdmin','erro','loginUsuario','loginSenha','btnLogin','btnLogout','btnSalvarPessoa','btnSalvarNota','btnBuscar','btnAddUsuario','listaUsuarios','nome','categoria','anoEntrada','matricula','email','telefone','contato','cpf','rg','dataNascimento','pessoaNota','tipoNota','nota','buscaNome','buscaCategoria','resultado','grafico','listaNotas','secaoNotas','novoUsuario','senhaUsuario','nivelUsuario','categoriaUsuario','listaLixeira','listaLogs','btnLimparLixeira'];
+    const IDs = ['login','sistema','adminGear','painelAdmin','erro','loginUsuario','loginSenha','btnLogin','btnLogout','btnSalvarPessoa','btnSalvarNota','btnBuscar','btnAddUsuario','listaUsuarios','nome','categoria','anoEntrada','matricula','email','telefone','contato','cpf','rg','dataNascimento','pessoaNota','tipoNota','nota','buscaNome','buscaCategoria','resultado','grafico','listaNotas','secaoNotas','novoUsuario','senhaUsuario','nivelUsuario','categoriaUsuario','listaLixeira','btnLimparLixeira'];
     IDs.forEach(id => el[id] = document.getElementById(id));
 
     el.btnLogin.onclick = login;
@@ -191,16 +192,16 @@ window.addEventListener('DOMContentLoaded', () => {
     el.btnLimparLixeira.onclick = limparLixeira;
     el.adminGear.onclick = () => el.painelAdmin.style.display = el.painelAdmin.style.display==='none' ? 'block' : 'none';
 
-    // Máscaras
+    // Máscaras de entrada
     el.cpf.oninput = (e) => e.target.value = e.target.value.replace(/\D/g,"").replace(/(\d{3})(\d)/,"$1.$2").replace(/(\d{3})(\d)/,"$1.$2").replace(/(\d{3})(\d{1,2})$/,"$1-$2");
-    el.telefone.oninput = (e) => maskTelefone(e);
-    el.contato.oninput = (e) => maskTelefone(e);
     el.rg.oninput = (e) => e.target.value = e.target.value.replace(/\D/g,"").replace(/(\d{2})(\d)/,"$1.$2").replace(/(\d{3})(\d)/,"$1.$2").replace(/(\d{3})(\d{1,2})$/,"$1-$2");
+    el.telefone.oninput = (e) => maskTel(e);
+    el.contato.oninput = (e) => maskTel(e);
 
     carregarUsuarios();
 });
 
-function maskTelefone(e) {
+function maskTel(e) {
     let v = e.target.value.replace(/\D/g,"");
     v = v.replace(/^(\d{2})(\d)/g,"($1) $2");
     v = v.replace(/(\d)(\d{4})$/,"$1-$2");
@@ -208,15 +209,32 @@ function maskTelefone(e) {
 }
 
 async function login(){
+    // Recarrega usuários para garantir o status mais recente do Firebase
+    const s = await getDocs(collection(db, 'usuarios'));
+    usuarios = [];
+    s.forEach(d => usuarios.push({id: d.id, ...d.data()}));
+
     const u = usuarios.find(u => u.usuario === el.loginUsuario.value && u.senha === el.loginSenha.value);
-    if(!u) return el.erro.innerText = "Credenciais inválidas";
+    
+    if(!u) {
+        el.erro.innerText = "Usuário ou senha incorretos.";
+        return;
+    }
+
+    // BLOQUEIO DE LOGIN AQUI
+    if(u.ativo === false) {
+        el.erro.innerText = "Sua conta está BLOQUEADA. Contate o administrador.";
+        return;
+    }
+
     usuarioLogado = u;
     el.login.style.display = 'none';
     el.sistema.style.display = 'block';
+    
     if(u.nivel === 'admin'){
         el.adminGear.style.display = 'block';
         document.getElementById('secaoCadastro').style.display = 'block';
-        carregarLixeira(); carregarLogs();
+        carregarLixeira();
     } else {
         el.buscaCategoria.value = u.categoria;
         el.buscaCategoria.disabled = true;
@@ -235,14 +253,21 @@ function renderUsuarios(){
     el.listaUsuarios.innerHTML = "";
     usuarios.forEach(u => {
         el.listaUsuarios.innerHTML += `
-            <div class="card" style="padding:8px; display:flex; justify-content:space-between; align-items:center;">
-                <span><b>${u.usuario}</b> (${u.nivel})</span>
+            <div class="card ${u.ativo ? '' : 'bloqueado'}" style="padding:10px; display:flex; justify-content:space-between; align-items:center;">
+                <span><b>${u.usuario}</b> (${u.nivel}) ${u.ativo ? '' : '<b>[BLOQUEADO]</b>'}</span>
                 <div>
-                    <button class="btn-mini ${u.ativo ? 'secondary' : 'success'}" onclick="toggleUser('${u.id}', ${u.ativo})">${u.ativo ? 'Bloquear' : 'Ativar'}</button>
+                    <button class="btn-mini ${u.ativo ? 'secondary' : 'success'}" onclick="toggleUser('${u.id}', ${u.ativo})">
+                        ${u.ativo ? 'Bloquear' : 'Desbloquear'}
+                    </button>
                     ${u.usuario !== 'CLX' ? `<button class="danger btn-mini" onclick="excluirUsuario('${u.id}')">Excluir</button>` : ''}
                 </div>
             </div>`;
     });
+}
+
+window.toggleUser = async function(id, statusAtual){
+    await updateDoc(doc(db, 'usuarios', id), { ativo: !statusAtual });
+    carregarUsuarios(); // Atualiza a lista
 }
 
 window.excluirUsuario = async function(id){
@@ -265,7 +290,6 @@ async function carregarPessoas(){
 }
 
 async function salvarPessoa(){
-    if(!el.nome.value || !el.categoria.value) return alert("Preencha Nome e Categoria");
     const dados = {
         nome: el.nome.value, categoria: el.categoria.value, matricula: el.matricula.value,
         email: el.email.value, telefone: el.telefone.value, contato: el.contato.value,
@@ -275,7 +299,7 @@ async function salvarPessoa(){
     if(pessoaEditando) await updateDoc(doc(db, 'pessoas', pessoaEditando.id), dados);
     else await addDoc(collection(db, 'pessoas'), dados);
     
-    alert(`Salvo: ${el.nome.value}`);
+    alert("Dados salvos!");
     ['nome','matricula','email','telefone','contato','cpf','rg','dataNascimento'].forEach(f => el[f].value = "");
     pessoaEditando = null;
     carregarPessoas();
@@ -302,7 +326,6 @@ function buscar(){
         el.resultado.innerHTML += `
             <div class="card">
                 <b>${p.nome}</b> (${p.categoria})<br>
-                <small>Matrícula: ${p.matricula || '---'} | CPF: ${p.cpf || '---'}</small><br>
                 <button class="btn-mini" onclick="verNotas(${idx})">Ver Notas</button>
                 ${usuarioLogado.nivel==='admin' ? `<button class="btn-mini secondary" onclick="editarPessoa(${idx})">Editar</button> <button class="btn-mini danger" onclick="excluirPessoa('${p.id}')">Excluir</button>` : ''}
             </div>`;
@@ -334,12 +357,15 @@ window.editarPessoa = function(idx){
 }
 
 async function addUsuario(){
-    await addDoc(collection(db, 'usuarios'), { usuario: el.novoUsuario.value, senha: el.senhaUsuario.value, nivel: el.nivelUsuario.value, categoria: el.categoriaUsuario.value, ativo: true });
-    carregarUsuarios();
-}
-
-window.toggleUser = async function(id, s){
-    await updateDoc(doc(db, 'usuarios', id), { ativo: !s });
+    if(!el.novoUsuario.value || !el.senhaUsuario.value) return alert("Preencha usuário e senha");
+    await addDoc(collection(db, 'usuarios'), { 
+        usuario: el.novoUsuario.value, 
+        senha: el.senhaUsuario.value, 
+        nivel: el.nivelUsuario.value, 
+        categoria: el.categoriaUsuario.value, 
+        ativo: true 
+    });
+    el.novoUsuario.value = ""; el.senhaUsuario.value = "";
     carregarUsuarios();
 }
 
@@ -349,13 +375,8 @@ async function carregarLixeira(){
     s.forEach(d => el.listaLixeira.innerHTML += `<div>- ${d.data().dados?.nome}</div>`);
 }
 
-async function carregarLogs(){
-    const s = await getDocs(collection(db, 'logs'));
-    el.listaLogs.innerHTML = "<b>Logs:</b>";
-    s.forEach(d => el.listaLogs.innerHTML += `<div>${d.data().data}: ${d.data().acao}</div>`);
-}
-
 async function limparLixeira(){
+    if(!confirm("Esvaziar lixeira?")) return;
     const s = await getDocs(collection(db, 'lixeira'));
     s.forEach(async d => await deleteDoc(doc(db, 'lixeira', d.id)));
     carregarLixeira();
