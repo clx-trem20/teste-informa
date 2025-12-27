@@ -180,9 +180,9 @@
         </div>
     </div>
 
-    <!-- NOVA TABELA: RESUMO DE TEMPO -->
+    <!-- TABELA: RESUMO DE TEMPO (Apenas Ativos Hoje) -->
     <div style="margin-top: 20px;">
-        <h3 style="color: var(--red);">Resumo de Tempo Trabalhado (Hoje)</h3>
+        <h3 style="color: var(--red);">Resumo de Tempo Trabalhado (Apenas Quem Bateu Ponto Hoje)</h3>
         <table id="resumoTempoTable">
             <thead style="background: #fff5f5;">
                 <tr>
@@ -401,47 +401,59 @@ function updateDashboard() {
     if(saiEl) saiEl.textContent = ptsHoje.filter(p => p.tipo === 'Saída').length;
     
     let totalMsGlobal = 0;
-    const ids = [...new Set(ptsHoje.map(p => p.idColab))];
+    let colaboradoresAtivosCount = 0;
     
     if(resumoBody) resumoBody.innerHTML = '';
 
-    // Mapeamos todos os colaboradores para o resumo, mesmo os que não bateram ponto hoje
-    colaboradores.sort((a,b) => a.nome.localeCompare(b.nome)).forEach(colab => {
-        const cPts = ptsHoje
-            .filter(p => p.idColab === colab.id)
-            .sort((a, b) => new Date(a.horarioISO) - new Date(b.horarioISO));
+    // Filtramos colaboradores que bateram o ponto HOJE
+    const idsAtivosHoje = [...new Set(ptsHoje.map(p => p.idColab))];
 
-        let colabMs = 0;
-        let status = '<span style="color:var(--muted)">Ausente</span>';
-        
-        for(let i = 0; i < cPts.length - 1; i++) {
-            if(cPts[i].tipo === 'Entrada' && cPts[i+1].tipo === 'Saída') {
-                const diff = new Date(cPts[i+1].horarioISO) - new Date(cPts[i].horarioISO);
-                if(diff > 0) colabMs += diff;
-                i++; 
-            }
-        }
+    if(idsAtivosHoje.length === 0) {
+        if(resumoBody) resumoBody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 20px; color: var(--muted)">Nenhum registo de ponto para hoje até ao momento.</td></tr>';
+    } else {
+        colaboradores
+            .filter(c => idsAtivosHoje.includes(c.id))
+            .sort((a,b) => a.nome.localeCompare(b.nome))
+            .forEach(colab => {
+                const cPts = ptsHoje
+                    .filter(p => p.idColab === colab.id)
+                    .sort((a, b) => new Date(a.horarioISO) - new Date(b.horarioISO));
 
-        if(cPts.length > 0) {
-            const ultimo = cPts[cPts.length - 1];
-            status = ultimo.tipo === 'Entrada' ? 
-                '<span style="color:var(--green); font-weight:700">● Presente</span>' : 
-                '<span style="color:var(--red)">● Fora</span>';
-        }
+                let colabMs = 0;
+                let status = '<span style="color:var(--muted)">Ausente</span>';
+                
+                // Cálculo de tempo (Entrada -> Saída)
+                for(let i = 0; i < cPts.length - 1; i++) {
+                    if(cPts[i].tipo === 'Entrada' && cPts[i+1].tipo === 'Saída') {
+                        const diff = new Date(cPts[i+1].horarioISO) - new Date(cPts[i].horarioISO);
+                        if(diff > 0) colabMs += diff;
+                        i++; 
+                    }
+                }
 
-        totalMsGlobal += colabMs;
+                // Definir status visual do ponto atual
+                if(cPts.length > 0) {
+                    const ultimo = cPts[cPts.length - 1];
+                    status = ultimo.tipo === 'Entrada' ? 
+                        '<span style="color:var(--green); font-weight:700">● Presente</span>' : 
+                        '<span style="color:var(--red)">● Fora</span>';
+                }
 
-        if(resumoBody) {
-            resumoBody.innerHTML += `
-                <tr>
-                    <td>${colab.id}</td>
-                    <td><strong>${colab.nome}</strong></td>
-                    <td>${status}</td>
-                    <td style="font-family:monospace; font-weight:700">${formatTime(colabMs)}</td>
-                </tr>
-            `;
-        }
-    });
+                totalMsGlobal += colabMs;
+                colaboradoresAtivosCount++;
+
+                if(resumoBody) {
+                    resumoBody.innerHTML += `
+                        <tr>
+                            <td>${colab.id}</td>
+                            <td><strong>${colab.nome}</strong></td>
+                            <td>${status}</td>
+                            <td style="font-family:monospace; font-weight:700">${formatTime(colabMs)}</td>
+                        </tr>
+                    `;
+                }
+            });
+    }
 
     if(horasEl) {
         const novoTexto = formatTime(totalMsGlobal);
