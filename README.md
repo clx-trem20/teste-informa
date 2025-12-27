@@ -27,7 +27,7 @@
   .download{background:var(--yellow);color:#111}
   .danger{background:var(--red);color:#fff}
   .qr-btn{background:var(--indigo);color:#fff}
-  .settings-btn{background: transparent; color: #fff; padding: 5px; border-radius: 50%;}
+  .settings-btn{background: transparent; color: #fff; padding: 5px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.2);}
   .settings-btn:hover { background: rgba(255,255,255,0.1); }
 
   main{padding:20px;max-width:1100px;margin:0 auto; flex: 1; width: 100%; box-sizing: border-box;}
@@ -58,7 +58,7 @@
   .admin-panel { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 25px; margin-top: 10px; }
   .stat-card { background: var(--card); padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border-left: 5px solid var(--blue); }
   .stat-card h4 { margin: 0; color: var(--muted); font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; }
-  .stat-card .value { font-size: 28px; font-weight: 800; margin-top: 5px; color: var(--blue); }
+  .stat-card .value { font-size: 28px; font-weight: 800; margin-top: 5px; color: var(--blue); transition: color 0.3s; }
   .stat-card.green { border-left-color: var(--green); }
   .stat-card.yellow { border-left-color: var(--yellow); }
   .stat-card.red { border-left-color: var(--red); }
@@ -83,50 +83,13 @@
   .qr-img { display: flex; justify-content: center; margin: 12px 0; }
 
   @media print {
-    /* Esconde absolutamente tudo */
     body * { visibility: hidden !important; height: 0; margin: 0; padding: 0; overflow: hidden; }
-    
-    /* Mostra apenas o modal da galeria e seu conteúdo */
     #qrGalleryModal, #qrGalleryModal * { visibility: visible !important; height: auto !important; overflow: visible !important; }
-    
-    #qrGalleryModal { 
-      position: absolute !important; 
-      left: 0 !important; 
-      top: 0 !important; 
-      width: 100% !important; 
-      background: white !important; 
-      display: block !important;
-      padding: 0 !important;
-      margin: 0 !important;
-    }
-
-    .modal-content {
-      box-shadow: none !important;
-      max-width: 100% !important;
-      width: 100% !important;
-      padding: 0 !important;
-      margin: 0 !important;
-    }
-
+    #qrGalleryModal { position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; background: white !important; display: block !important; padding: 0 !important; margin: 0 !important; }
+    .modal-content { box-shadow: none !important; max-width: 100% !important; width: 100% !important; padding: 0 !important; margin: 0 !important; }
     .no-print { display: none !important; }
-
-    .qr-grid { 
-      display: grid !important; 
-      grid-template-columns: repeat(3, 1fr) !important; 
-      gap: 30px !important; 
-      padding: 20px !important;
-    }
-
-    .qr-card { 
-      border: 1px solid #eee !important; 
-      padding: 15px !important;
-      margin: 0 !important;
-      break-inside: avoid !important;
-      page-break-inside: avoid !important;
-    }
-    
-    /* Forçar fundo branco para os cards */
-    .qr-card { background-color: #fff !important; -webkit-print-color-adjust: exact; }
+    .qr-grid { display: grid !important; grid-template-columns: repeat(3, 1fr) !important; gap: 30px !important; padding: 20px !important; }
+    .qr-card { border: 1px solid #eee !important; padding: 15px !important; margin: 0 !important; break-inside: avoid !important; page-break-inside: avoid !important; background-color: #fff !important; -webkit-print-color-adjust: exact; }
   }
 </style>
 </head>
@@ -155,95 +118,104 @@
     </div>
   </div>
 
+  <!-- Cabeçalho -->
   <header id="mainHeader" class="hidden">
     <div style="display:flex;gap:12px;align-items:center">
       <div class="logo">Sistema de Ponto</div>
-      <button id="abrirConfigBtn" class="settings-btn hidden" title="Configurações de Acesso">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 2 2 2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 2 2 2 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 2 2 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+      <button id="abrirConfigBtn" class="settings-btn hidden" title="Gerenciar Usuários">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 2 2 2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 2 2 2 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 2 2 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
       </button>
     </div>
     <div style="display:flex;gap:12px;align-items:center">
       <div id="clock">00:00:00</div>
       <div class="controls">
-        <button class="danger" id="limparPontosBtn" title="Limpar todos os registros de ponto">🗑️ Limpar Pontos</button>
+        <button class="danger" id="limparPontosBtn">🗑️ Limpar Pontos</button>
         <button class="qr-btn" id="abrirScannerBtn">📸 Scanner</button>
         <button class="secondary" id="abrirGalleryBtn">🖼️ Crachás</button>
-        <button class="download" id="baixarBtn">📥 Exportar Excel</button>
+        <button class="download" id="baixarBtn">📥 Excel</button>
         <button class="secondary" id="logoutBtn">Sair</button>
       </div>
     </div>
   </header>
 
+  <!-- Aplicação Principal -->
   <main id="mainApp" class="hidden">
+    <!-- Dashboard de Estatísticas -->
     <div class="admin-panel">
-      <div class="stat-card">
-        <h4>Total Colaboradores</h4>
-        <div class="value" id="stat-total">0</div>
-      </div>
-      <div class="stat-card green">
-        <h4>Entradas Hoje</h4>
-        <div class="value" id="stat-entradas">0</div>
-      </div>
-      <div class="stat-card yellow">
-        <h4>Saídas Hoje</h4>
-        <div class="value" id="stat-saidas">0</div>
-      </div>
-      <div class="stat-card red">
-        <h4>Horas Totais (Hoje)</h4>
-        <div class="value" id="stat-horas" style="font-size: 20px;">0h 0m 0s</div>
+      <div class="stat-card"><h4>Total Equipe</h4><div class="value" id="stat-total">0</div></div>
+      <div class="stat-card green"><h4>Entradas Hoje</h4><div class="value" id="stat-entradas">0</div></div>
+      <div class="stat-card yellow"><h4>Saídas Hoje</h4><div class="value" id="stat-saidas">0</div></div>
+      <div class="stat-card red" style="background: #fff5f5;">
+        <h4>Horas Produtivas Hoje</h4>
+        <div class="value" id="stat-horas" style="color: var(--red); font-variant-numeric: tabular-nums;">0h 00m 00s</div>
       </div>
     </div>
 
-    <input id="search" class="search" placeholder="🔍 Filtrar lista de colaboradores, e-mails ou registros...">
+    <input id="search" class="search" placeholder="🔍 Procurar colaborador, cargo ou ID...">
 
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-      <h3 style="margin:0">Equipe</h3>
+      <h3 style="margin:0">Lista de Colaboradores</h3>
       <button class="add" id="addColabBtn">+ Novo Membro</button>
     </div>
 
     <table id="colabTable">
-      <thead><tr><th>ID</th><th>Nome / E-mail</th><th>Cargo</th><th>Turno</th><th>Ações</th></tr></thead>
+      <thead><tr><th>ID</th><th>Nome</th><th>Cargo</th><th>Turno</th><th>Ações</th></tr></thead>
       <tbody id="colabBody"></tbody>
     </table>
 
-    <h3>Registros de Entrada</h3>
-    <table id="entradasTable">
-      <thead><tr><th>ID</th><th>Nome</th><th>Data</th><th>Hora</th><th>Ações</th></tr></thead>
-      <tbody id="entradasBody"></tbody>
-    </table>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px;">
+        <div>
+            <h3>Entradas (Hoje)</h3>
+            <table id="entradasTable">
+              <thead><tr><th>ID</th><th>Nome</th><th>Hora</th><th>Ações</th></tr></thead>
+              <tbody id="entradasBody"></tbody>
+            </table>
+        </div>
+        <div>
+            <h3>Saídas (Hoje)</h3>
+            <table id="saidasTable">
+              <thead><tr><th>ID</th><th>Nome</th><th>Hora</th><th>Ações</th></tr></thead>
+              <tbody id="saidasBody"></tbody>
+            </table>
+        </div>
+    </div>
 
-    <h3>Registros de Saída</h3>
-    <table id="saidasTable">
-      <thead><tr><th>ID</th><th>Nome</th><th>Data</th><th>Hora</th><th>Ações</th></tr></thead>
-      <tbody id="saidasBody"></tbody>
-    </table>
-
-    <h3>Resumo de Tempo Trabalhado (Hoje)</h3>
-    <table id="horasTable">
-      <thead><tr><th>Colaborador</th><th>Data</th><th>Tempo Total</th></tr></thead>
-      <tbody id="horasBody"></tbody>
-    </table>
+    <!-- NOVA TABELA: RESUMO DE TEMPO -->
+    <div style="margin-top: 20px;">
+        <h3 style="color: var(--red);">Resumo de Tempo Trabalhado (Hoje)</h3>
+        <table id="resumoTempoTable">
+            <thead style="background: #fff5f5;">
+                <tr>
+                    <th>ID</th>
+                    <th>Colaborador</th>
+                    <th>Estado Atual</th>
+                    <th>Tempo Total Acumulado</th>
+                </tr>
+            </thead>
+            <tbody id="resumoTempoBody"></tbody>
+        </table>
+    </div>
   </main>
 </div>
 
 <footer id="mainFooter" class="no-print">
-  © 2025 – Criado por CLX
+  © 2025 – Gerido por CLX
 </footer>
 
 <!-- MODAIS -->
 <div id="configModal" class="modal hidden">
   <div class="modal-content">
-    <h3>Gestão de Acessos</h3>
+    <h3>Configurações de Acesso (Master Only)</h3>
     <div style="background: #f8fafc; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-      <h4 style="margin-top: 0;">Novo Usuário</h4>
+      <h4 style="margin-top: 0;">Novo Acesso Administrativo</h4>
       <div style="display: grid; grid-template-columns: 1fr 1fr 120px; gap: 10px;">
-        <input id="newUserLogin" placeholder="Login" style="padding:8px; border:1px solid #ddd; border-radius:4px">
+        <input id="newUserLogin" placeholder="Usuário" style="padding:8px; border:1px solid #ddd; border-radius:4px">
         <input id="newUserPass" type="password" placeholder="Senha" style="padding:8px; border:1px solid #ddd; border-radius:4px">
         <button class="add" id="saveUserBtn">Criar</button>
       </div>
     </div>
     <table id="usersTable">
-      <thead><tr><th>Login</th><th>Senha</th><th>Ação</th></tr></thead>
+      <thead><tr><th>Utilizador</th><th>Password</th><th>Remover</th></tr></thead>
       <tbody id="usersBody"></tbody>
     </table>
     <button class="secondary" id="fecharConfigBtn" style="margin-top: 10px;">Fechar</button>
@@ -252,23 +224,23 @@
 
 <div id="scannerModal" class="modal hidden">
   <div class="modal-content" style="max-width:400px; text-align:center">
-    <h3>Scanner QR</h3>
+    <h3>Leitor de QR Code</h3>
     <div id="video-container">
       <video id="video-preview" autoplay playsinline></video>
       <canvas id="canvas-hidden" class="hidden"></canvas>
       <div class="scanner-line"></div>
     </div>
-    <div id="scanner-feedback" style="margin-top:20px; font-weight:700;">Aguardando QR Code...</div>
-    <button class="secondary" id="fecharScannerBtn" style="width:100%; margin-top: 20px">Fechar</button>
+    <div id="scanner-feedback" style="margin-top:20px; font-weight:700;">Aguardando...</div>
+    <button class="secondary" id="fecharScannerBtn" style="width:100%; margin-top: 20px">Cancelar</button>
   </div>
 </div>
 
 <div id="qrGalleryModal" class="modal hidden">
   <div class="modal-content" style="max-width: 900px;">
     <div class="no-print" style="display:flex; justify-content:space-between; margin-bottom:20px">
-      <h3 style="margin:0">Galeria de Crachás</h3>
+      <h3 style="margin:0">Folha de Crachás</h3>
       <div style="display:flex; gap:10px">
-        <button class="download" id="baixarCrachasBtn">💾 Gerar PDF / Imprimir</button>
+        <button class="download" id="baixarCrachasBtn">🖨️ Imprimir Página</button>
         <button class="secondary" id="fecharGalleryBtn">Fechar</button>
       </div>
     </div>
@@ -278,14 +250,14 @@
 
 <div id="colabModal" class="modal hidden">
   <div class="modal-content" style="max-width:400px">
-    <h3 id="colabModalTitle">Novo Registro</h3>
+    <h3 id="colabModalTitle">Registar Colaborador</h3>
     <input id="nomeInput" placeholder="Nome Completo" style="width:100%;padding:12px;margin:8px 0;border-radius:8px;border:1px solid #e5e7eb; box-sizing: border-box;">
-    <input id="emailInput" type="email" placeholder="E-mail Corporativo" style="width:100%;padding:12px;margin:8px 0;border-radius:8px;border:1px solid #e5e7eb; box-sizing: border-box;">
-    <input id="cargoInput" placeholder="Cargo" style="width:100%;padding:12px;margin:8px 0;border-radius:8px;border:1px solid #e5e7eb; box-sizing: border-box;">
-    <input id="turnoInput" placeholder="Turno (Ex: 08:00 - 17:00)" style="width:100%;padding:12px;margin:8px 0;border-radius:8px;border:1px solid #e5e7eb; box-sizing: border-box;">
+    <input id="emailInput" placeholder="E-mail (Opcional)" style="width:100%;padding:12px;margin:8px 0;border-radius:8px;border:1px solid #e5e7eb; box-sizing: border-box;">
+    <input id="cargoInput" placeholder="Cargo/Função" style="width:100%;padding:12px;margin:8px 0;border-radius:8px;border:1px solid #e5e7eb; box-sizing: border-box;">
+    <input id="turnoInput" placeholder="Horário (ex: 09:00 - 18:00)" style="width:100%;padding:12px;margin:8px 0;border-radius:8px;border:1px solid #e5e7eb; box-sizing: border-box;">
     <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:15px">
       <button class="secondary" id="cancelColab">Voltar</button>
-      <button class="add" id="saveColab">Guardar</button>
+      <button class="add" id="saveColab">Confirmar</button>
     </div>
   </div>
 </div>
@@ -315,7 +287,7 @@ let scanning = false;
 let lastScanTime = 0;
 let isAppInitialized = false;
 
-/* ---------- LOGIN E AUTH ---------- */
+/* ---------- AUTH & ACCESS CONTROL ---------- */
 onSnapshot(collection(db, "usuarios_admin"), s => {
     usuarios = s.docs.map(d => ({id: d.id, ...d.data()}));
     const b = document.getElementById('usersBody'); 
@@ -327,7 +299,6 @@ onSnapshot(collection(db, "usuarios_admin"), s => {
 document.getElementById('loginBtn').onclick = () => {
     const u = document.getElementById('user').value.trim();
     const p = document.getElementById('pass').value.trim();
-    
     const isMaster = (u === 'CLX' && p === '02072007');
     const isOther = usuarios.some(x => x.user === u && x.pass === p);
 
@@ -336,22 +307,15 @@ document.getElementById('loginBtn').onclick = () => {
             localStorage.setItem('ponto_user', u); 
             localStorage.setItem('ponto_pass', p);
             localStorage.setItem('ponto_remember', 'true');
-        } else {
-            localStorage.removeItem('ponto_user'); 
-            localStorage.removeItem('ponto_pass');
-            localStorage.removeItem('ponto_remember');
         }
-        
         document.getElementById('loginScreen').classList.add('hidden');
         document.getElementById('mainApp').classList.remove('hidden');
         document.getElementById('mainHeader').classList.remove('hidden');
-        
-        if(isMaster) document.getElementById('abrirConfigBtn').classList.remove('hidden');
-        
+        const configBtn = document.getElementById('abrirConfigBtn');
+        if(isMaster) configBtn.classList.remove('hidden');
         if(!isAppInitialized) init();
     } else {
-        document.getElementById('loginMsg').textContent = "Usuário ou Senha incorretos!";
-        setTimeout(() => { if(document.getElementById('loginMsg')) document.getElementById('loginMsg').textContent = ""; }, 3000);
+        document.getElementById('loginMsg').textContent = "Dados inválidos!";
     }
 };
 
@@ -359,11 +323,10 @@ document.getElementById('logoutBtn').onclick = () => {
     document.getElementById('mainApp').classList.add('hidden');
     document.getElementById('mainHeader').classList.add('hidden');
     document.getElementById('loginScreen').classList.remove('hidden');
-    document.getElementById('user').value = '';
-    document.getElementById('pass').value = '';
+    localStorage.removeItem('ponto_remember');
 };
 
-/* ---------- CORE INIT & OUTROS ---------- */
+/* ---------- LOGICA CENTRAL ---------- */
 function init() {
     isAppInitialized = true;
     onSnapshot(collection(db, "colaboradores"), s => {
@@ -379,11 +342,11 @@ function init() {
 function renderColaboradores() {
     const body = document.getElementById('colabBody');
     const term = document.getElementById('search').value.toLowerCase();
+    if(!body) return;
     body.innerHTML = '';
-    colaboradores.filter(c => c.nome.toLowerCase().includes(term) || (c.email || "").toLowerCase().includes(term) || c.id.includes(term))
+    colaboradores.filter(c => c.nome.toLowerCase().includes(term) || c.id.includes(term))
       .sort((a,b) => a.nome.localeCompare(b.nome)).forEach(c => {
-        const emailDisplay = c.email ? `<br><small style="color:var(--muted)">${c.email}</small>` : '';
-        body.innerHTML += `<tr><td>${c.id}</td><td><strong>${c.nome}</strong>${emailDisplay}</td><td>${c.cargo}</td><td>${c.turno}</td>
+        body.innerHTML += `<tr><td>${c.id}</td><td><strong>${c.nome}</strong></td><td>${c.cargo}</td><td>${c.turno}</td>
         <td><div style="display:flex; gap:5px"><button class="add" onclick="window.regManual('${c.id}', 'Entrada')">E</button>
         <button class="secondary" onclick="window.regManual('${c.id}', 'Saída')">S</button>
         <button class="danger" onclick="window.delColab('${c.id}')">X</button></div></td></tr>`;
@@ -394,81 +357,123 @@ function renderColaboradores() {
 function renderTabelas() {
     const entBody = document.getElementById('entradasBody');
     const saiBody = document.getElementById('saidasBody');
-    const horasBody = document.getElementById('horasBody');
     const term = document.getElementById('search').value.toLowerCase();
-    if(!entBody || !saiBody || !horasBody) return;
-    entBody.innerHTML = ''; saiBody.innerHTML = ''; horasBody.innerHTML = '';
+    if(!entBody || !saiBody) return;
+    entBody.innerHTML = ''; saiBody.innerHTML = '';
     
-    const pontosFiltrados = pontos.filter(p => p.nome.toLowerCase().includes(term) || p.idColab.includes(term));
-    
-    pontosFiltrados.sort((a,b) => new Date(b.horarioISO) - new Date(a.horarioISO)).forEach(p => {
-        const row = `<tr><td>${p.idColab}</td><td>${p.nome}</td><td>${p.data}</td><td>${p.hora}</td><td><button class="danger" onclick="window.delPonto('${p.id}')">Excluir</button></td></tr>`;
-        if (p.tipo === 'Entrada') entBody.innerHTML += row; else saiBody.innerHTML += row;
-    });
-
     const hojeStr = new Date().toLocaleDateString('pt-BR');
-    const pontosHoje = pontos.filter(p => p.data === hojeStr);
-    const colabsHoje = [...new Set(pontosHoje.map(p => p.idColab))];
+    const ptsHoje = pontos.filter(p => p.data === hojeStr && (p.nome.toLowerCase().includes(term) || p.idColab.includes(term)))
+                .sort((a,b) => new Date(b.horarioISO) - new Date(a.horarioISO));
     
-    colabsHoje.forEach(cid => {
-        const cPontos = pontosHoje.filter(p => p.idColab === cid).sort((a,b) => new Date(a.horarioISO) - new Date(b.horarioISO));
-        const cNome = cPontos[0].nome;
-        let totalMs = 0;
-        for(let i=0; i < cPontos.length; i++){
-           if(cPontos[i].tipo === 'Entrada' && cPontos[i+1] && cPontos[i+1].tipo === 'Saída'){
-               totalMs += new Date(cPontos[i+1].horarioISO) - new Date(cPontos[i].horarioISO);
-               i++;
-           }
-        }
-        const h = Math.floor(totalMs / 3600000);
-        const m = Math.floor((totalMs % 3600000) / 60000);
-        const s = Math.floor((totalMs % 60000) / 1000);
-        horasBody.innerHTML += `<tr><td>${cNome}</td><td>${hojeStr}</td><td><strong>${h}h ${m}m ${s}s</strong></td></tr>`;
+    ptsHoje.forEach(p => {
+        const row = `<tr><td>${p.idColab}</td><td>${p.nome}</td><td>${p.hora}</td><td><button class="danger" onclick="window.delPonto('${p.id}')">X</button></td></tr>`;
+        if (p.tipo === 'Entrada') entBody.innerHTML += row; else saiBody.innerHTML += row;
     });
     updateDashboard();
 }
 
+/**
+ * FORMATAÇÃO DE TEMPO
+ */
+function formatTime(ms) {
+    const totalSegundos = Math.floor(ms / 1000);
+    const h = Math.floor(totalSegundos / 3600);
+    const m = Math.floor((totalSegundos % 3600) / 60);
+    const s = totalSegundos % 60;
+    return `${h}h ${m.toString().padStart(2, '0')}m ${s.toString().padStart(2, '0')}s`;
+}
+
+/**
+ * CÁLCULO DE DASHBOARD E TABELA DE RESUMO
+ */
 function updateDashboard() {
     const hojeStr = new Date().toLocaleDateString('pt-BR');
     const ptsHoje = pontos.filter(p => p.data === hojeStr);
+    
     const totalEl = document.getElementById('stat-total');
     const entEl = document.getElementById('stat-entradas');
     const saiEl = document.getElementById('stat-saidas');
-    const hrsEl = document.getElementById('stat-horas');
-    
+    const horasEl = document.getElementById('stat-horas');
+    const resumoBody = document.getElementById('resumoTempoBody');
+
     if(totalEl) totalEl.textContent = colaboradores.length;
     if(entEl) entEl.textContent = ptsHoje.filter(p => p.tipo === 'Entrada').length;
     if(saiEl) saiEl.textContent = ptsHoje.filter(p => p.tipo === 'Saída').length;
     
-    let totalGlobalMs = 0;
-    const colabIds = [...new Set(ptsHoje.map(p => p.idColab))];
-    colabIds.forEach(cid => {
-        const cPts = ptsHoje.filter(p => p.idColab === cid).sort((a,b) => new Date(a.horarioISO) - new Date(b.horarioISO));
-        for(let i=0; i < cPts.length; i++){
-           if(cPts[i].tipo === 'Entrada' && cPts[i+1] && cPts[i+1].tipo === 'Saída'){
-               totalGlobalMs += new Date(cPts[i+1].horarioISO) - new Date(cPts[i].horarioISO);
-               i++;
-           }
+    let totalMsGlobal = 0;
+    const ids = [...new Set(ptsHoje.map(p => p.idColab))];
+    
+    if(resumoBody) resumoBody.innerHTML = '';
+
+    // Mapeamos todos os colaboradores para o resumo, mesmo os que não bateram ponto hoje
+    colaboradores.sort((a,b) => a.nome.localeCompare(b.nome)).forEach(colab => {
+        const cPts = ptsHoje
+            .filter(p => p.idColab === colab.id)
+            .sort((a, b) => new Date(a.horarioISO) - new Date(b.horarioISO));
+
+        let colabMs = 0;
+        let status = '<span style="color:var(--muted)">Ausente</span>';
+        
+        for(let i = 0; i < cPts.length - 1; i++) {
+            if(cPts[i].tipo === 'Entrada' && cPts[i+1].tipo === 'Saída') {
+                const diff = new Date(cPts[i+1].horarioISO) - new Date(cPts[i].horarioISO);
+                if(diff > 0) colabMs += diff;
+                i++; 
+            }
+        }
+
+        if(cPts.length > 0) {
+            const ultimo = cPts[cPts.length - 1];
+            status = ultimo.tipo === 'Entrada' ? 
+                '<span style="color:var(--green); font-weight:700">● Presente</span>' : 
+                '<span style="color:var(--red)">● Fora</span>';
+        }
+
+        totalMsGlobal += colabMs;
+
+        if(resumoBody) {
+            resumoBody.innerHTML += `
+                <tr>
+                    <td>${colab.id}</td>
+                    <td><strong>${colab.nome}</strong></td>
+                    <td>${status}</td>
+                    <td style="font-family:monospace; font-weight:700">${formatTime(colabMs)}</td>
+                </tr>
+            `;
         }
     });
-    const h = Math.floor(totalGlobalMs / 3600000);
-    const m = Math.floor((totalGlobalMs % 3600000) / 60000);
-    const s = Math.floor((totalGlobalMs % 60000) / 1000);
-    if(hrsEl) hrsEl.textContent = `${h}h ${m}m ${s}s`;
+
+    if(horasEl) {
+        const novoTexto = formatTime(totalMsGlobal);
+        if(horasEl.textContent !== novoTexto) {
+            horasEl.textContent = novoTexto;
+            horasEl.style.color = '#ff0000';
+            setTimeout(() => horasEl.style.color = 'var(--red)', 200);
+        }
+    }
 }
 
 window.regManual = async (idColab, tipo) => {
     const c = colaboradores.find(x => x.id === idColab);
     if (!c) return;
     const now = new Date();
-    const p = { id: Date.now().toString(), idColab, nome: c.nome, tipo, data: now.toLocaleDateString('pt-BR'), hora: now.toLocaleTimeString('pt-BR', {hour12:false}), horarioISO: now.toISOString() };
+    const p = { 
+        id: Date.now().toString(), 
+        idColab, 
+        nome: c.nome, 
+        tipo, 
+        data: now.toLocaleDateString('pt-BR'), 
+        hora: now.toLocaleTimeString('pt-BR', {hour12:false}), 
+        horarioISO: now.toISOString() 
+    };
     await setDoc(doc(db, "pontos", p.id), p);
 };
 
-window.delColab = async (id) => { if(confirm("Remover colaborador?")) await deleteDoc(doc(db, "colaboradores", id)); };
-window.delPonto = async (id) => { if(confirm("Apagar ponto?")) await deleteDoc(doc(db, "pontos", id)); };
+window.delColab = async (id) => { if(confirm("Eliminar colaborador?")) await deleteDoc(doc(db, "colaboradores", id)); };
+window.delPonto = async (id) => { if(confirm("Apagar registo?")) await deleteDoc(doc(db, "pontos", id)); };
 window.delUser = async (id) => { if(confirm("Remover acesso?")) await deleteDoc(doc(db, "usuarios_admin", id)); };
 
+/* ---------- MODAIS & UI ---------- */
 document.getElementById('abrirConfigBtn').onclick = () => document.getElementById('configModal').classList.remove('hidden');
 document.getElementById('fecharConfigBtn').onclick = () => document.getElementById('configModal').classList.add('hidden');
 document.getElementById('addColabBtn').onclick = () => document.getElementById('colabModal').classList.remove('hidden');
@@ -476,19 +481,22 @@ document.getElementById('cancelColab').onclick = () => document.getElementById('
 document.getElementById('search').oninput = () => { renderColaboradores(); renderTabelas(); };
 
 document.getElementById('saveColab').onclick = async () => {
-    const n = document.getElementById('nomeInput').value, em = document.getElementById('emailInput').value, c = document.getElementById('cargoInput').value, t = document.getElementById('turnoInput').value;
-    if(!n) return alert("Nome é obrigatório");
+    const n = document.getElementById('nomeInput').value;
     const id = Math.floor(1000 + Math.random() * 9000).toString();
-    await setDoc(doc(db, "colaboradores", id), { id, nome: n, email: em, cargo: c, turno: t });
+    await setDoc(doc(db, "colaboradores", id), { 
+        id, nome: n, 
+        email: document.getElementById('emailInput').value, 
+        cargo: document.getElementById('cargoInput').value, 
+        turno: document.getElementById('turnoInput').value 
+    });
     document.getElementById('colabModal').classList.add('hidden');
-    document.getElementById('nomeInput').value = ''; document.getElementById('emailInput').value = ''; document.getElementById('cargoInput').value = ''; document.getElementById('turnoInput').value = '';
+    document.getElementById('nomeInput').value = ''; 
 };
 
 document.getElementById('saveUserBtn').onclick = async () => {
     const u = document.getElementById('newUserLogin').value.trim(), p = document.getElementById('newUserPass').value.trim();
-    if(!u || !p) return alert("Preencha login e senha");
+    if(!u || !p) return alert("Dados incompletos!");
     await setDoc(doc(db, "usuarios_admin", Date.now().toString()), { id: Date.now().toString(), user: u, pass: p });
-    document.getElementById('newUserLogin').value = ''; document.getElementById('newUserPass').value = '';
 };
 
 document.getElementById('abrirGalleryBtn').onclick = () => {
@@ -502,7 +510,7 @@ document.getElementById('abrirGalleryBtn').onclick = () => {
     document.getElementById('qrGalleryModal').classList.remove('hidden');
 };
 
-document.getElementById('baixarCrachasBtn').onclick = () => { window.print(); };
+document.getElementById('baixarCrachasBtn').onclick = () => window.print();
 document.getElementById('fecharGalleryBtn').onclick = () => document.getElementById('qrGalleryModal').classList.add('hidden');
 
 document.getElementById('abrirScannerBtn').onclick = async () => {
@@ -510,8 +518,9 @@ document.getElementById('abrirScannerBtn').onclick = async () => {
     try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
         document.getElementById('video-preview').srcObject = stream; scanning = true; requestAnimationFrame(tick);
-    } catch(e) { alert("Câmera não disponível"); }
+    } catch(e) { alert("Câmera bloqueada."); }
 };
+
 document.getElementById('fecharScannerBtn').onclick = () => {
     scanning = false; if(document.getElementById('video-preview').srcObject) document.getElementById('video-preview').srcObject.getTracks().forEach(t => t.stop());
     document.getElementById('scannerModal').classList.add('hidden');
@@ -530,11 +539,10 @@ function tick() {
             const colab = colaboradores.find(c => String(c.id) === String(code.data));
             if (colab) {
                 lastScanTime = Date.now();
-                const meusPts = pontos.filter(p => p.idColab === colab.id).sort((a,b) => new Date(b.horarioISO) - new Date(a.horarioISO));
+                const meusPts = pontos.filter(p => p.idColab === colab.id && p.data === new Date().toLocaleDateString('pt-BR')).sort((a,b) => new Date(b.horarioISO) - new Date(a.horarioISO));
                 const tipo = (meusPts.length > 0 && meusPts[0].tipo === 'Entrada') ? 'Saída' : 'Entrada';
                 window.regManual(colab.id, tipo);
-                document.getElementById('scanner-feedback').textContent = `REGISTRADO: ${tipo} - ${colab.nome}`;
-                setTimeout(() => { if(document.getElementById('scanner-feedback')) document.getElementById('scanner-feedback').textContent = "Aguardando QR Code..."; }, 2000);
+                document.getElementById('scanner-feedback').textContent = `✓ ${tipo}: ${colab.nome}`;
             }
         }
     }
@@ -544,12 +552,12 @@ function tick() {
 document.getElementById('baixarBtn').onclick = () => {
     const ws = XLSX.utils.json_to_sheet(pontos);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Relatório");
-    XLSX.writeFile(wb, "Registros_Ponto.xlsx");
+    XLSX.utils.book_append_sheet(wb, ws, "Pontos");
+    XLSX.writeFile(wb, "Relatorio_Ponto.xlsx");
 };
 
 document.getElementById('limparPontosBtn').onclick = async () => {
-    if(confirm("Apagar todos os pontos?")) {
+    if(confirm("Apagar TODOS os registos?")) {
         const snap = await getDocs(collection(db, "pontos"));
         snap.forEach(d => deleteDoc(doc(db, "pontos", d.id)));
     }
@@ -560,14 +568,10 @@ setInterval(() => {
     if(clockEl) clockEl.textContent = new Date().toLocaleTimeString('pt-BR'); 
 }, 1000);
 
-// Auto-login se lembrado
-window.addEventListener('DOMContentLoaded', () => {
-    const remember = localStorage.getItem('ponto_remember');
-    const rU = localStorage.getItem('ponto_user');
-    const rP = localStorage.getItem('ponto_pass');
-    if(remember === 'true' && rU && rP) {
-        document.getElementById('user').value = rU;
-        document.getElementById('pass').value = rP;
+window.addEventListener('load', () => {
+    if(localStorage.getItem('ponto_remember') === 'true') {
+        document.getElementById('user').value = localStorage.getItem('ponto_user');
+        document.getElementById('pass').value = localStorage.getItem('ponto_pass');
         document.getElementById('rememberMe').checked = true;
     }
 });
