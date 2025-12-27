@@ -56,11 +56,35 @@
         .badge-entrada { background: #dcfce7; color: #166534; }
         .badge-saida { background: #fee2e2; color: #991b1b; }
         .turno-text { font-size: 12px; color: var(--muted); font-weight: 500; }
+        
         @media print {
-            body * { visibility: hidden !important; }
-            #qrGalleryModal, #qrGalleryModal *, #reportModal, #reportModal * { visibility: visible !important; }
-            #qrGalleryModal, #reportModal { position: absolute !important; left: 0; top: 0; width: 100%; display: block !important; }
-            .no-print { display: none !important; }
+            body { background: white; }
+            #app-container, header, footer, main, .no-print, .modal:not(#qrGalleryModal):not(#reportModal) { 
+                display: none !important; 
+            }
+            .modal { 
+                position: relative !important; 
+                background: none !important; 
+                display: block !important; 
+                inset: auto !important;
+                z-index: auto !important;
+            }
+            .modal-content { 
+                width: 100% !important; 
+                max-width: none !important; 
+                box-shadow: none !important; 
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+            .qr-grid { 
+                display: grid !important; 
+                grid-template-columns: 1fr 1fr 1fr !important; 
+                gap: 10px !important; 
+            }
+            .qr-card { 
+                border: 1px solid #eee !important;
+                break-inside: avoid;
+            }
         }
     </style>
 </head>
@@ -152,7 +176,7 @@
 <footer id="mainFooter" class="no-print">© 2025 – Gerido por CLX</footer>
 
 <!-- MODAIS -->
-<div id="colabModal" class="modal hidden">
+<div id="colabModal" class="modal hidden no-print">
     <div class="modal-content" style="max-width:400px">
         <h3>Registar Colaborador</h3>
         <input id="nomeInput" placeholder="Nome Completo" style="width:100%;padding:12px;margin:8px 0;border-radius:8px;border:1px solid #ddd;">
@@ -166,7 +190,7 @@
     </div>
 </div>
 
-<div id="scannerModal" class="modal hidden">
+<div id="scannerModal" class="modal hidden no-print">
     <div class="modal-content" style="max-width:400px; text-align:center">
         <h3>Leitor de Crachá</h3>
         <div id="video-container">
@@ -181,7 +205,7 @@
 
 <div id="qrGalleryModal" class="modal hidden">
     <div class="modal-content">
-        <div style="display:flex;justify-content:space-between;margin-bottom:20px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:20px" class="no-print">
             <h3>Crachás Gerados</h3>
             <div style="display:flex; gap: 8px;">
                 <button class="download" onclick="window.print()">🖨️ Imprimir Tudo</button>
@@ -192,7 +216,7 @@
     </div>
 </div>
 
-<div id="configModal" class="modal hidden">
+<div id="configModal" class="modal hidden no-print">
     <div class="modal-content">
         <h3>Contas Administrativas</h3>
         <div style="display:grid;grid-template-columns:1fr 1fr 100px;gap:10px;margin-bottom:15px">
@@ -215,13 +239,14 @@
                 <h3 id="reportName" style="margin:0">Relatório</h3>
                 <p id="reportTurno" class="turno-text" style="margin: 5px 0 0 0;"></p>
             </div>
-            <button class="secondary" id="fecharReportBtn">X</button>
+            <button class="secondary no-print" id="fecharReportBtn">X</button>
         </div>
         <div id="reportTotalHours" style="font-size:32px; font-weight:800; color:var(--red); text-align:center; margin: 20px 0;">0h 00m</div>
         <table style="margin-top:15px">
             <thead><tr><th>Data</th><th>Hora</th><th>Tipo de Registro</th></tr></thead>
             <tbody id="reportTableBody"></tbody>
         </table>
+        <button class="download no-print" onclick="window.print()" style="margin-top: 20px; width: 100%; justify-content: center;">🖨️ Imprimir Relatório</button>
     </div>
 </div>
 
@@ -325,7 +350,7 @@ const renderTabelas = () => {
     const ptsHoje = pontos.filter(p => p.data === hoje).sort((a,b) => b.id - a.id);
     
     ptsHoje.forEach(p => {
-        const row = `<tr><td>${p.idColab}</td><td><b>${p.nome}</b></td><td>${p.hora}</td><td><button class="danger" style="padding:4px 8px" onclick="window.delPonto('${p.id}')">X</button></td></tr>`;
+        const row = `<tr><td>${p.idColab}</td><td><b>${p.nome}</b></td><td>${p.hora}</td><td><button class="danger no-print" style="padding:4px 8px" onclick="window.delPonto('${p.id}')">X</button></td></tr>`;
         if(p.tipo === 'Entrada') e.innerHTML += row; else s.innerHTML += row;
     });
     updateDash();
@@ -388,7 +413,6 @@ window.abrirRelatorio = id => {
     body.innerHTML = '';
     
     let totalMs = 0;
-    // Cálculo simples de horas totais para o relatório completo
     const ordenados = [...meus].sort((a,b) => new Date(a.horarioISO) - new Date(b.horarioISO));
     for(let i=0; i<ordenados.length-1; i++) {
         if(ordenados[i].tipo==='Entrada' && ordenados[i+1].tipo==='Saída') {
@@ -478,7 +502,7 @@ function tick() {
             if(colab) {
                 lastScanTime = Date.now();
                 const hoje = new Date().toLocaleDateString('pt-BR');
-                const p = pontos.filter(x => x.idColab === colab.id && x.data === hoje).sort((a,b) => new Date(b.horarioISO) - new Date(a.horarioISO));
+                const p = pontos.filter(x => x.idColab === colab.id && x.data === hoje).sort((a,b) => new Date(b.horarioISO) - new Date(b.horarioISO));
                 const tipo = (p.length > 0 && p[0].tipo === 'Entrada') ? 'Saída' : 'Entrada';
                 window.regManual(colab.id, tipo);
                 document.getElementById('scanner-feedback').textContent = `REGISTADO: ${tipo} - ${colab.nome}`;
@@ -489,25 +513,36 @@ function tick() {
     requestAnimationFrame(tick);
 }
 
-/* --- EXPORT --- */
+/* --- EXPORT EXCEL COM ABAS SEPARADAS --- */
 document.getElementById('baixarBtn').onclick = () => {
-    const data = pontos.map(p => {
+    // Filtrar dados
+    const entradas = pontos.filter(p => p.tipo === 'Entrada').map(p => {
         const c = colaboradores.find(x => x.id === p.idColab);
         return {
-            'ID': p.idColab,
-            'Colaborador': p.nome,
-            'Email': c ? c.email : '-',
-            'Cargo': c ? c.cargo : '-',
-            'Turno': c ? c.turno : '-',
-            'Data': p.data,
-            'Hora': p.hora,
-            'Tipo': p.tipo
+            'ID': p.idColab, 'Colaborador': p.nome, 'Email': c ? c.email : '-',
+            'Cargo': c ? c.cargo : '-', 'Turno': c ? c.turno : '-',
+            'Data': p.data, 'Hora': p.hora
         };
     });
-    const ws = XLSX.utils.json_to_sheet(data);
+
+    const saidas = pontos.filter(p => p.tipo === 'Saída').map(p => {
+        const c = colaboradores.find(x => x.id === p.idColab);
+        return {
+            'ID': p.idColab, 'Colaborador': p.nome, 'Email': c ? c.email : '-',
+            'Cargo': c ? c.cargo : '-', 'Turno': c ? c.turno : '-',
+            'Data': p.data, 'Hora': p.hora
+        };
+    });
+
+    // Criar abas
+    const wsEntradas = XLSX.utils.json_to_sheet(entradas);
+    const wsSaidas = XLSX.utils.json_to_sheet(saidas);
+    
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Registos");
-    XLSX.writeFile(wb, `Ponto_CLX_${new Date().toLocaleDateString().replace(/\//g,'-')}.xlsx`);
+    XLSX.utils.book_append_sheet(wb, wsEntradas, "Entradas");
+    XLSX.utils.book_append_sheet(wb, wsSaidas, "Saídas");
+    
+    XLSX.writeFile(wb, `Ponto_CLX_Separado_${new Date().toLocaleDateString().replace(/\//g,'-')}.xlsx`);
 };
 
 document.getElementById('limparPontosBtn').onclick = async () => {
