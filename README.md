@@ -32,7 +32,7 @@
 
   main{padding:20px;max-width:1100px;margin:0 auto; flex: 1; width: 100%; box-sizing: border-box;}
   
-  footer { text-align: center; padding: 20px; color: var(--muted); font-size: 14px; border-top: 1px solid #e2e8f0; background: #fff; width: 100%; box-sizing: border-box; z-index: 10000; }
+  footer { text-align: center; padding: 20px; color: var(--muted); font-size: 14px; border-top: 1px solid #e2e8f0; background: #fff; width: 100%; box-sizing: border-box; }
 
   #loginScreen {
     position: fixed;
@@ -79,17 +79,54 @@
   @keyframes scan { 0% { top: 0%; } 100% { top: 100%; } }
   
   .qr-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; }
-  .qr-card { border: 2px solid #eef2f6; padding: 15px; border-radius: 12px; text-align: center; background: #fff; }
+  .qr-card { border: 2px solid #eef2f6; padding: 15px; border-radius: 12px; text-align: center; background: #fff; page-break-inside: avoid; break-inside: avoid; }
   .qr-img { display: flex; justify-content: center; margin: 12px 0; }
 
   @media print {
-    body * { visibility: hidden; }
-    #qrGalleryModal, #qrGalleryModal * { visibility: visible; }
-    #qrGalleryModal { position: fixed; left: 0; top: 0; width: 100%; height: 100%; z-index: 11000; background: white; margin: 0; padding: 20px; }
+    /* Esconde absolutamente tudo */
+    body * { visibility: hidden !important; height: 0; margin: 0; padding: 0; overflow: hidden; }
+    
+    /* Mostra apenas o modal da galeria e seu conteúdo */
+    #qrGalleryModal, #qrGalleryModal * { visibility: visible !important; height: auto !important; overflow: visible !important; }
+    
+    #qrGalleryModal { 
+      position: absolute !important; 
+      left: 0 !important; 
+      top: 0 !important; 
+      width: 100% !important; 
+      background: white !important; 
+      display: block !important;
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+
+    .modal-content {
+      box-shadow: none !important;
+      max-width: 100% !important;
+      width: 100% !important;
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+
     .no-print { display: none !important; }
-    .qr-grid { grid-template-columns: repeat(3, 1fr) !important; display: grid !important; gap: 20px !important; }
-    .qr-card { border: 1px solid #ccc !important; break-inside: avoid; }
-    footer { display: none; }
+
+    .qr-grid { 
+      display: grid !important; 
+      grid-template-columns: repeat(3, 1fr) !important; 
+      gap: 30px !important; 
+      padding: 20px !important;
+    }
+
+    .qr-card { 
+      border: 1px solid #eee !important; 
+      padding: 15px !important;
+      margin: 0 !important;
+      break-inside: avoid !important;
+      page-break-inside: avoid !important;
+    }
+    
+    /* Forçar fundo branco para os cards */
+    .qr-card { background-color: #fff !important; -webkit-print-color-adjust: exact; }
   }
 </style>
 </head>
@@ -189,7 +226,7 @@
   </main>
 </div>
 
-<footer id="mainFooter">
+<footer id="mainFooter" class="no-print">
   © 2025 – Criado por CLX
 </footer>
 
@@ -324,24 +361,6 @@ document.getElementById('logoutBtn').onclick = () => {
     document.getElementById('loginScreen').classList.remove('hidden');
     document.getElementById('user').value = '';
     document.getElementById('pass').value = '';
-    if(localStorage.getItem('ponto_remember') !== 'true') {
-        document.getElementById('rememberMe').checked = false;
-    }
-};
-
-window.onload = () => {
-    document.getElementById('user').value = '';
-    document.getElementById('pass').value = '';
-    const remember = localStorage.getItem('ponto_remember');
-    const rU = localStorage.getItem('ponto_user');
-    const rP = localStorage.getItem('ponto_pass');
-    if(remember === 'true' && rU && rP) { 
-        document.getElementById('user').value = rU; 
-        document.getElementById('pass').value = rP; 
-        document.getElementById('rememberMe').checked = true; 
-    } else {
-        document.getElementById('rememberMe').checked = false;
-    }
 };
 
 /* ---------- CORE INIT & OUTROS ---------- */
@@ -380,7 +399,6 @@ function renderTabelas() {
     if(!entBody || !saiBody || !horasBody) return;
     entBody.innerHTML = ''; saiBody.innerHTML = ''; horasBody.innerHTML = '';
     
-    // Filtro básico de busca
     const pontosFiltrados = pontos.filter(p => p.nome.toLowerCase().includes(term) || p.idColab.includes(term));
     
     pontosFiltrados.sort((a,b) => new Date(b.horarioISO) - new Date(a.horarioISO)).forEach(p => {
@@ -388,38 +406,31 @@ function renderTabelas() {
         if (p.tipo === 'Entrada') entBody.innerHTML += row; else saiBody.innerHTML += row;
     });
 
-    // Renderizar resumo de tempo por colaborador (Hoje)
     const hojeStr = new Date().toLocaleDateString('pt-BR');
     const pontosHoje = pontos.filter(p => p.data === hojeStr);
-    
-    // Agrupar por colaborador
     const colabsHoje = [...new Set(pontosHoje.map(p => p.idColab))];
+    
     colabsHoje.forEach(cid => {
         const cPontos = pontosHoje.filter(p => p.idColab === cid).sort((a,b) => new Date(a.horarioISO) - new Date(b.horarioISO));
         const cNome = cPontos[0].nome;
         let totalMs = 0;
-        
         for(let i=0; i < cPontos.length; i++){
            if(cPontos[i].tipo === 'Entrada' && cPontos[i+1] && cPontos[i+1].tipo === 'Saída'){
                totalMs += new Date(cPontos[i+1].horarioISO) - new Date(cPontos[i].horarioISO);
-               i++; // pula a saída já processada
+               i++;
            }
         }
-        
         const h = Math.floor(totalMs / 3600000);
         const m = Math.floor((totalMs % 3600000) / 60000);
         const s = Math.floor((totalMs % 60000) / 1000);
-        
         horasBody.innerHTML += `<tr><td>${cNome}</td><td>${hojeStr}</td><td><strong>${h}h ${m}m ${s}s</strong></td></tr>`;
     });
-
     updateDashboard();
 }
 
 function updateDashboard() {
     const hojeStr = new Date().toLocaleDateString('pt-BR');
     const ptsHoje = pontos.filter(p => p.data === hojeStr);
-    
     const totalEl = document.getElementById('stat-total');
     const entEl = document.getElementById('stat-entradas');
     const saiEl = document.getElementById('stat-saidas');
@@ -429,10 +440,8 @@ function updateDashboard() {
     if(entEl) entEl.textContent = ptsHoje.filter(p => p.tipo === 'Entrada').length;
     if(saiEl) saiEl.textContent = ptsHoje.filter(p => p.tipo === 'Saída').length;
     
-    // Cálculo total de horas trabalhadas por todos os colaboradores hoje
     let totalGlobalMs = 0;
     const colabIds = [...new Set(ptsHoje.map(p => p.idColab))];
-    
     colabIds.forEach(cid => {
         const cPts = ptsHoje.filter(p => p.idColab === cid).sort((a,b) => new Date(a.horarioISO) - new Date(b.horarioISO));
         for(let i=0; i < cPts.length; i++){
@@ -442,7 +451,6 @@ function updateDashboard() {
            }
         }
     });
-
     const h = Math.floor(totalGlobalMs / 3600000);
     const m = Math.floor((totalGlobalMs % 3600000) / 60000);
     const s = Math.floor((totalGlobalMs % 60000) / 1000);
@@ -473,18 +481,14 @@ document.getElementById('saveColab').onclick = async () => {
     const id = Math.floor(1000 + Math.random() * 9000).toString();
     await setDoc(doc(db, "colaboradores", id), { id, nome: n, email: em, cargo: c, turno: t });
     document.getElementById('colabModal').classList.add('hidden');
-    document.getElementById('nomeInput').value = '';
-    document.getElementById('emailInput').value = '';
-    document.getElementById('cargoInput').value = '';
-    document.getElementById('turnoInput').value = '';
+    document.getElementById('nomeInput').value = ''; document.getElementById('emailInput').value = ''; document.getElementById('cargoInput').value = ''; document.getElementById('turnoInput').value = '';
 };
 
 document.getElementById('saveUserBtn').onclick = async () => {
     const u = document.getElementById('newUserLogin').value.trim(), p = document.getElementById('newUserPass').value.trim();
     if(!u || !p) return alert("Preencha login e senha");
     await setDoc(doc(db, "usuarios_admin", Date.now().toString()), { id: Date.now().toString(), user: u, pass: p });
-    document.getElementById('newUserLogin').value = '';
-    document.getElementById('newUserPass').value = '';
+    document.getElementById('newUserLogin').value = ''; document.getElementById('newUserPass').value = '';
 };
 
 document.getElementById('abrirGalleryBtn').onclick = () => {
@@ -498,11 +502,9 @@ document.getElementById('abrirGalleryBtn').onclick = () => {
     document.getElementById('qrGalleryModal').classList.remove('hidden');
 };
 
-document.getElementById('baixarCrachasBtn').onclick = () => {
-    window.print();
-};
-
+document.getElementById('baixarCrachasBtn').onclick = () => { window.print(); };
 document.getElementById('fecharGalleryBtn').onclick = () => document.getElementById('qrGalleryModal').classList.add('hidden');
+
 document.getElementById('abrirScannerBtn').onclick = async () => {
     document.getElementById('scannerModal').classList.remove('hidden');
     try {
@@ -547,7 +549,7 @@ document.getElementById('baixarBtn').onclick = () => {
 };
 
 document.getElementById('limparPontosBtn').onclick = async () => {
-    if(confirm("Apagar todos os pontos? Esta ação não pode ser desfeita.")) {
+    if(confirm("Apagar todos os pontos?")) {
         const snap = await getDocs(collection(db, "pontos"));
         snap.forEach(d => deleteDoc(doc(db, "pontos", d.id)));
     }
@@ -557,6 +559,18 @@ setInterval(() => {
     const clockEl = document.getElementById('clock');
     if(clockEl) clockEl.textContent = new Date().toLocaleTimeString('pt-BR'); 
 }, 1000);
+
+// Auto-login se lembrado
+window.addEventListener('DOMContentLoaded', () => {
+    const remember = localStorage.getItem('ponto_remember');
+    const rU = localStorage.getItem('ponto_user');
+    const rP = localStorage.getItem('ponto_pass');
+    if(remember === 'true' && rU && rP) {
+        document.getElementById('user').value = rU;
+        document.getElementById('pass').value = rP;
+        document.getElementById('rememberMe').checked = true;
+    }
+});
 </script>
 </body>
 </html>
