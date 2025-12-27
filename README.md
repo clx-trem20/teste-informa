@@ -104,7 +104,7 @@
         <p style="color: var(--muted); font-size: 14px; margin-top: 5px;">Gerenciamento de Ponto Eletrônico</p>
       </div>
       
-      <!-- Campos com autocomplete desativado para evitar preenchimento automático indesejado -->
+      <!-- Campos com autocomplete desativado -->
       <input id="user" placeholder="Usuário" autocomplete="off" style="width:100%;padding:14px;margin:8px 0;border-radius:8px;border:1px solid #e5e7eb; box-sizing: border-box; font-size: 16px;">
       <input id="pass" type="password" placeholder="Senha" autocomplete="new-password" style="width:100%;padding:14px;margin:8px 0;border-radius:8px;border:1px solid #e5e7eb; box-sizing: border-box; font-size: 16px;">
       
@@ -118,7 +118,6 @@
     </div>
   </div>
 
-  <!-- Cabeçalho -->
   <header id="mainHeader" class="hidden">
     <div style="display:flex;gap:12px;align-items:center">
       <div class="logo">Sistema de Ponto</div>
@@ -279,133 +278,8 @@ let scanning = false;
 let lastScanTime = 0;
 let isAppInitialized = false;
 
-/* ---------- FUNÇÕES GLOBAIS ---------- */
-window.delColab = async (id) => {
-    if(confirm("Deseja remover este colaborador e todos os seus registros?")) {
-        await deleteDoc(doc(db, "colaboradores", id));
-    }
-};
-
-window.delPonto = async (id) => {
-    if(confirm("Deseja apagar este registro de ponto?")) {
-        await deleteDoc(doc(db, "pontos", id));
-    }
-};
-
-window.regManual = async (idColab, tipo) => {
-    const c = colaboradores.find(x => x.id === idColab);
-    if (!c) return;
-    const now = new Date();
-    const p = { 
-        id: Date.now().toString(), 
-        idColab, 
-        nome: c.nome, 
-        tipo, 
-        data: now.toLocaleDateString('pt-BR'), 
-        hora: now.toLocaleTimeString('pt-BR', {hour12:false}), 
-        horarioISO: now.toISOString() 
-    };
-    await setDoc(doc(db, "pontos", p.id), p);
-};
-
-window.delUser = async (id) => {
-    if(confirm("Remover acesso?")) await deleteDoc(doc(db, "usuarios_admin", id));
-};
-
-/* ---------- RENDERIZAÇÃO ---------- */
-function renderColaboradores() {
-    const body = document.getElementById('colabBody');
-    const term = document.getElementById('search').value.toLowerCase();
-    body.innerHTML = '';
-    
-    colaboradores
-      .filter(c => c.nome.toLowerCase().includes(term) || (c.email || "").toLowerCase().includes(term) || c.id.includes(term))
-      .sort((a,b) => a.nome.localeCompare(b.nome))
-      .forEach(c => {
-        const emailDisplay = c.email ? `<br><small style="color:var(--muted)">${c.email}</small>` : '';
-        body.innerHTML += `<tr>
-        <td>${c.id}</td>
-        <td><strong>${c.nome}</strong>${emailDisplay}</td>
-        <td>${c.cargo}</td>
-        <td>${c.turno}</td>
-        <td>
-            <div style="display:flex; gap:5px">
-              <button class="add" onclick="window.regManual('${c.id}', 'Entrada')" title="Entrada">E</button>
-              <button class="secondary" onclick="window.regManual('${c.id}', 'Saída')" title="Saída">S</button>
-              <button class="danger" onclick="window.delColab('${c.id}')" title="Excluir Colaborador">X</button>
-            </div>
-        </td></tr>`;
-    });
-    updateDashboard();
-}
-
-function renderTabelas() {
-    const entBody = document.getElementById('entradasBody');
-    const saiBody = document.getElementById('saidasBody');
-    const horasBody = document.getElementById('horasBody');
-    const term = document.getElementById('search').value.toLowerCase();
-    
-    if(!entBody || !saiBody || !horasBody) return;
-
-    entBody.innerHTML = ''; saiBody.innerHTML = ''; horasBody.innerHTML = '';
-    
-    const ptsFiltrados = pontos
-      .filter(p => p.nome.toLowerCase().includes(term) || p.idColab.includes(term))
-      .sort((a,b) => new Date(b.horarioISO) - new Date(a.horarioISO));
-
-    ptsFiltrados.forEach(p => {
-        const row = `<tr><td>${p.idColab}</td><td>${p.nome}</td><td>${p.data}</td><td>${p.hora}</td><td><button class="danger" onclick="window.delPonto('${p.id}')">Excluir</button></td></tr>`;
-        if (p.tipo === 'Entrada') entBody.innerHTML += row; else saiBody.innerHTML += row;
-    });
-
-    const hoje = new Date().toLocaleDateString('pt-BR');
-    const ptsHoje = pontos.filter(p => p.data === hoje);
-    
-    const resumo = {};
-    ptsHoje.forEach(p => {
-        if(!resumo[p.idColab]) resumo[p.idColab] = { nome: p.nome, data: p.data, entrada: null, saida: null };
-        if(p.tipo === 'Entrada') resumo[p.idColab].entrada = new Date(p.horarioISO);
-        if(p.tipo === 'Saída') resumo[p.idColab].saida = new Date(p.horarioISO);
-    });
-
-    let totalMsGeral = 0;
-    Object.values(resumo).forEach(r => {
-        let tempoTxt = "Incompleto";
-        if(r.entrada && r.saida) {
-            const diff = r.saida - r.entrada;
-            if(diff > 0) {
-              totalMsGeral += diff;
-              const h = Math.floor(diff / 3600000);
-              const m = Math.floor((diff % 3600000) / 60000);
-              const s = Math.floor((diff % 60000) / 1000);
-              tempoTxt = `${h}h ${m}m ${s}s`;
-            }
-        }
-        horasBody.innerHTML += `<tr><td>${r.nome}</td><td>${r.data}</td><td>${tempoTxt}</td></tr>`;
-    });
-
-    const hG = Math.floor(totalMsGeral / 3600000);
-    const mG = Math.floor((totalMsGeral % 3600000) / 60000);
-    const sG = Math.floor((totalMsGeral % 60000) / 1000);
-    document.getElementById('stat-horas').textContent = `${hG}h ${mG}m ${sG}s`;
-
-    updateDashboard();
-}
-
-function updateDashboard() {
-    const hojeStr = new Date().toLocaleDateString('pt-BR');
-    const ptsHoje = pontos.filter(p => p.data === hojeStr);
-    const totalEl = document.getElementById('stat-total');
-    if(totalEl) totalEl.textContent = colaboradores.length;
-    
-    const entEl = document.getElementById('stat-entradas');
-    if(entEl) entEl.textContent = ptsHoje.filter(p => p.tipo === 'Entrada').length;
-    
-    const saiEl = document.getElementById('stat-saidas');
-    if(saiEl) saiEl.textContent = ptsHoje.filter(p => p.tipo === 'Saída').length;
-}
-
 /* ---------- LOGIN E AUTH ---------- */
+// Monitora usuários admin
 onSnapshot(collection(db, "usuarios_admin"), s => {
     usuarios = s.docs.map(d => ({id: d.id, ...d.data()}));
     const b = document.getElementById('usersBody'); 
@@ -422,10 +296,15 @@ document.getElementById('loginBtn').onclick = () => {
     const isOther = usuarios.some(x => x.user === u && x.pass === p);
 
     if(isMaster || isOther) {
+        // Se a checkbox estiver marcada, salva. Se não, limpa o que tinha.
         if(document.getElementById('rememberMe').checked) {
-            localStorage.setItem('ponto_user', u); localStorage.setItem('ponto_pass', p);
+            localStorage.setItem('ponto_user', u); 
+            localStorage.setItem('ponto_pass', p);
+            localStorage.setItem('ponto_remember', 'true');
         } else {
-            localStorage.removeItem('ponto_user'); localStorage.removeItem('ponto_pass');
+            localStorage.removeItem('ponto_user'); 
+            localStorage.removeItem('ponto_pass');
+            localStorage.removeItem('ponto_remember');
         }
         
         document.getElementById('loginScreen').classList.add('hidden');
@@ -441,7 +320,43 @@ document.getElementById('loginBtn').onclick = () => {
     }
 };
 
-/* ---------- CORE INIT ---------- */
+/* Logout: Limpa os campos para que o login não "fique aparecendo" se você não quiser */
+document.getElementById('logoutBtn').onclick = () => {
+    document.getElementById('mainApp').classList.add('hidden');
+    document.getElementById('mainHeader').classList.add('hidden');
+    document.getElementById('loginScreen').classList.remove('hidden');
+    
+    // Limpeza visual obrigatória ao deslogar
+    document.getElementById('user').value = '';
+    document.getElementById('pass').value = '';
+    
+    // Se NÃO estiver configurado para lembrar, a checkbox desmarca também
+    if(localStorage.getItem('ponto_remember') !== 'true') {
+        document.getElementById('rememberMe').checked = false;
+    }
+};
+
+/* No carregamento da página */
+window.onload = () => {
+    // Primeiro, garante que os campos começam vazios
+    document.getElementById('user').value = '';
+    document.getElementById('pass').value = '';
+
+    const remember = localStorage.getItem('ponto_remember');
+    const rU = localStorage.getItem('ponto_user');
+    const rP = localStorage.getItem('ponto_pass');
+    
+    // SÓ preenche se o usuário marcou a opção anteriormente
+    if(remember === 'true' && rU && rP) { 
+        document.getElementById('user').value = rU; 
+        document.getElementById('pass').value = rP; 
+        document.getElementById('rememberMe').checked = true; 
+    } else {
+        document.getElementById('rememberMe').checked = false;
+    }
+};
+
+/* ---------- CORE INIT & OUTROS ---------- */
 function init() {
     isAppInitialized = true;
     onSnapshot(collection(db, "colaboradores"), s => {
@@ -454,67 +369,86 @@ function init() {
     });
 }
 
-/* ---------- EVENTOS UI ---------- */
-document.getElementById('search').oninput = () => {
-    renderColaboradores();
-    renderTabelas();
+function renderColaboradores() {
+    const body = document.getElementById('colabBody');
+    const term = document.getElementById('search').value.toLowerCase();
+    body.innerHTML = '';
+    colaboradores.filter(c => c.nome.toLowerCase().includes(term) || (c.email || "").toLowerCase().includes(term) || c.id.includes(term))
+      .sort((a,b) => a.nome.localeCompare(b.nome)).forEach(c => {
+        const emailDisplay = c.email ? `<br><small style="color:var(--muted)">${c.email}</small>` : '';
+        body.innerHTML += `<tr><td>${c.id}</td><td><strong>${c.nome}</strong>${emailDisplay}</td><td>${c.cargo}</td><td>${c.turno}</td>
+        <td><div style="display:flex; gap:5px"><button class="add" onclick="window.regManual('${c.id}', 'Entrada')">E</button>
+        <button class="secondary" onclick="window.regManual('${c.id}', 'Saída')">S</button>
+        <button class="danger" onclick="window.delColab('${c.id}')">X</button></div></td></tr>`;
+    });
+    updateDashboard();
+}
+
+function renderTabelas() {
+    const entBody = document.getElementById('entradasBody');
+    const saiBody = document.getElementById('saidasBody');
+    const horasBody = document.getElementById('horasBody');
+    const term = document.getElementById('search').value.toLowerCase();
+    if(!entBody || !saiBody || !horasBody) return;
+    entBody.innerHTML = ''; saiBody.innerHTML = ''; horasBody.innerHTML = '';
+    pontos.filter(p => p.nome.toLowerCase().includes(term) || p.idColab.includes(term)).sort((a,b) => new Date(b.horarioISO) - new Date(a.horarioISO)).forEach(p => {
+        const row = `<tr><td>${p.idColab}</td><td>${p.nome}</td><td>${p.data}</td><td>${p.hora}</td><td><button class="danger" onclick="window.delPonto('${p.id}')">Excluir</button></td></tr>`;
+        if (p.tipo === 'Entrada') entBody.innerHTML += row; else saiBody.innerHTML += row;
+    });
+    updateDashboard();
+}
+
+function updateDashboard() {
+    const hojeStr = new Date().toLocaleDateString('pt-BR');
+    const ptsHoje = pontos.filter(p => p.data === hojeStr);
+    document.getElementById('stat-total').textContent = colaboradores.length;
+    document.getElementById('stat-entradas').textContent = ptsHoje.filter(p => p.tipo === 'Entrada').length;
+    document.getElementById('stat-saidas').textContent = ptsHoje.filter(p => p.tipo === 'Saída').length;
+}
+
+window.regManual = async (idColab, tipo) => {
+    const c = colaboradores.find(x => x.id === idColab);
+    if (!c) return;
+    const now = new Date();
+    const p = { id: Date.now().toString(), idColab, nome: c.nome, tipo, data: now.toLocaleDateString('pt-BR'), hora: now.toLocaleTimeString('pt-BR', {hour12:false}), horarioISO: now.toISOString() };
+    await setDoc(doc(db, "pontos", p.id), p);
 };
 
+window.delColab = async (id) => { if(confirm("Remover colaborador?")) await deleteDoc(doc(db, "colaboradores", id)); };
+window.delPonto = async (id) => { if(confirm("Apagar ponto?")) await deleteDoc(doc(db, "pontos", id)); };
+window.delUser = async (id) => { if(confirm("Remover acesso?")) await deleteDoc(doc(db, "usuarios_admin", id)); };
+
+document.getElementById('abrirConfigBtn').onclick = () => document.getElementById('configModal').classList.remove('hidden');
+document.getElementById('fecharConfigBtn').onclick = () => document.getElementById('configModal').classList.add('hidden');
+document.getElementById('addColabBtn').onclick = () => document.getElementById('colabModal').classList.remove('hidden');
+document.getElementById('cancelColab').onclick = () => document.getElementById('colabModal').classList.add('hidden');
+document.getElementById('search').oninput = () => { renderColaboradores(); renderTabelas(); };
+
 document.getElementById('saveColab').onclick = async () => {
-    const n = document.getElementById('nomeInput').value, 
-          em = document.getElementById('emailInput').value,
-          c = document.getElementById('cargoInput').value, 
-          t = document.getElementById('turnoInput').value;
+    const n = document.getElementById('nomeInput').value, em = document.getElementById('emailInput').value, c = document.getElementById('cargoInput').value, t = document.getElementById('turnoInput').value;
     if(!n) return alert("Nome é obrigatório");
     const id = Math.floor(1000 + Math.random() * 9000).toString();
     await setDoc(doc(db, "colaboradores", id), { id, nome: n, email: em, cargo: c, turno: t });
-    
-    document.getElementById('nomeInput').value = '';
-    document.getElementById('emailInput').value = '';
-    document.getElementById('cargoInput').value = '';
-    document.getElementById('turnoInput').value = '';
     document.getElementById('colabModal').classList.add('hidden');
 };
 
 document.getElementById('saveUserBtn').onclick = async () => {
     const u = document.getElementById('newUserLogin').value.trim(), p = document.getElementById('newUserPass').value.trim();
     if(!u || !p) return alert("Preencha login e senha");
-    const id = Date.now().toString();
-    await setDoc(doc(db, "usuarios_admin", id), { id, user: u, pass: p });
-    document.getElementById('newUserLogin').value = '';
-    document.getElementById('newUserPass').value = '';
+    await setDoc(doc(db, "usuarios_admin", Date.now().toString()), { id: Date.now().toString(), user: u, pass: p });
 };
 
-function renderCrachas() {
+document.getElementById('abrirGalleryBtn').onclick = () => {
     const grid = document.getElementById('qrGridContent'); grid.innerHTML = '';
     colaboradores.forEach(c => {
         const card = document.createElement('div'); card.className = 'qr-card';
-        const emailLine = c.email ? `<small style="display:block;margin-bottom:5px;color:var(--muted)">${c.email}</small>` : '';
-        card.innerHTML = `<strong>${c.nome}</strong>${emailLine}<small>${c.cargo}</small><div class="qr-img" id="qr-${c.id}"></div><small>ID: ${c.id}</small>`;
+        card.innerHTML = `<strong>${c.nome}</strong><div class="qr-img" id="qr-${c.id}"></div><small>ID: ${c.id}</small>`;
         grid.appendChild(card);
         new QRCode(document.getElementById(`qr-${c.id}`), { text: String(c.id), width: 120, height: 120 });
     });
-}
-
-/* NOVO: LIMPAR PONTOS */
-document.getElementById('limparPontosBtn').onclick = async () => {
-    if(confirm("ATENÇÃO: Deseja apagar TODOS os registros de entrada e saída do sistema? Esta ação não pode ser desfeita.")) {
-        const querySnapshot = await getDocs(collection(db, "pontos"));
-        const promises = [];
-        querySnapshot.forEach((docSnap) => {
-            promises.push(deleteDoc(doc(db, "pontos", docSnap.id)));
-        });
-        await Promise.all(promises);
-        alert("Todos os registros de ponto foram removidos.");
-    }
+    document.getElementById('qrGalleryModal').classList.remove('hidden');
 };
 
-/* NOVO: BAIXAR CRACHÁS */
-document.getElementById('baixarCrachasBtn').onclick = () => {
-    window.print();
-};
-
-document.getElementById('abrirGalleryBtn').onclick = () => { renderCrachas(); document.getElementById('qrGalleryModal').classList.remove('hidden'); };
 document.getElementById('fecharGalleryBtn').onclick = () => document.getElementById('qrGalleryModal').classList.add('hidden');
 document.getElementById('abrirScannerBtn').onclick = async () => {
     document.getElementById('scannerModal').classList.remove('hidden');
@@ -545,7 +479,6 @@ function tick() {
                 const tipo = (meusPts.length > 0 && meusPts[0].tipo === 'Entrada') ? 'Saída' : 'Entrada';
                 window.regManual(colab.id, tipo);
                 document.getElementById('scanner-feedback').textContent = `REGISTRADO: ${tipo} - ${colab.nome}`;
-                setTimeout(() => { if(scanning) document.getElementById('scanner-feedback').textContent = "Aguardando QR Code..."; }, 2000);
             }
         }
     }
@@ -559,42 +492,10 @@ document.getElementById('baixarBtn').onclick = () => {
     XLSX.writeFile(wb, "Registros_Ponto.xlsx");
 };
 
-document.getElementById('abrirConfigBtn').onclick = () => document.getElementById('configModal').classList.remove('hidden');
-document.getElementById('fecharConfigBtn').onclick = () => document.getElementById('configModal').classList.add('hidden');
-document.getElementById('addColabBtn').onclick = () => document.getElementById('colabModal').classList.remove('hidden');
-document.getElementById('cancelColab').onclick = () => document.getElementById('colabModal').classList.add('hidden');
-
-document.getElementById('logoutBtn').onclick = () => {
-    document.getElementById('mainApp').classList.add('hidden');
-    document.getElementById('mainHeader').classList.add('hidden');
-    document.getElementById('configModal').classList.add('hidden');
-    document.getElementById('abrirConfigBtn').classList.add('hidden');
-    document.getElementById('loginScreen').classList.remove('hidden');
-    
-    document.getElementById('user').value = '';
-    document.getElementById('pass').value = '';
-    
-    if(!localStorage.getItem('ponto_user')) {
-        document.getElementById('rememberMe').checked = false;
-    }
-};
-
-/* MODIFICAÇÃO: Garantir limpeza total no carregamento inicial */
-window.onload = () => {
-    // Limpa campos para evitar que o navegador preencha dados antigos antes do JS rodar
-    document.getElementById('user').value = '';
-    document.getElementById('pass').value = '';
-
-    // Só preenche se o utilizador pediu explicitamente no passado
-    const rU = localStorage.getItem('ponto_user');
-    const rP = localStorage.getItem('ponto_pass');
-    
-    if(rU && rP) { 
-        document.getElementById('user').value = rU; 
-        document.getElementById('pass').value = rP; 
-        document.getElementById('rememberMe').checked = true; 
-    } else {
-        document.getElementById('rememberMe').checked = false;
+document.getElementById('limparPontosBtn').onclick = async () => {
+    if(confirm("Apagar todos os pontos?")) {
+        const snap = await getDocs(collection(db, "pontos"));
+        snap.forEach(d => deleteDoc(doc(db, "pontos", d.id)));
     }
 };
 
