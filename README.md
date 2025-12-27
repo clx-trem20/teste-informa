@@ -26,6 +26,7 @@
   .secondary{background:#e5e7eb;color:#111}
   .download{background:var(--yellow);color:#111}
   .danger{background:var(--red);color:#fff}
+  .info-btn{background:var(--blue);color:#fff}
   .qr-btn{background:var(--indigo);color:#fff}
   .settings-btn{background: transparent; color: #fff; padding: 5px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.2);}
   .settings-btn:hover { background: rgba(255,255,255,0.1); }
@@ -82,10 +83,15 @@
   .qr-card { border: 2px solid #eef2f6; padding: 15px; border-radius: 12px; text-align: center; background: #fff; page-break-inside: avoid; break-inside: avoid; }
   .qr-img { display: flex; justify-content: center; margin: 12px 0; }
 
+  .report-header { background: #f1f5f9; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+  .report-badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
+  .badge-entrada { background: #dcfce7; color: #166534; }
+  .badge-saida { background: #fee2e2; color: #991b1b; }
+
   @media print {
     body * { visibility: hidden !important; height: 0; margin: 0; padding: 0; overflow: hidden; }
-    #qrGalleryModal, #qrGalleryModal * { visibility: visible !important; height: auto !important; overflow: visible !important; }
-    #qrGalleryModal { position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; background: white !important; display: block !important; padding: 0 !important; margin: 0 !important; }
+    #qrGalleryModal, #qrGalleryModal *, #reportModal, #reportModal * { visibility: visible !important; height: auto !important; overflow: visible !important; }
+    #qrGalleryModal, #reportModal { position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; background: white !important; display: block !important; padding: 0 !important; margin: 0 !important; }
     .modal-content { box-shadow: none !important; max-width: 100% !important; width: 100% !important; padding: 0 !important; margin: 0 !important; }
     .no-print { display: none !important; }
     .qr-grid { display: grid !important; grid-template-columns: repeat(3, 1fr) !important; gap: 30px !important; padding: 20px !important; }
@@ -122,6 +128,7 @@
   <header id="mainHeader" class="hidden">
     <div style="display:flex;gap:12px;align-items:center">
       <div class="logo">Sistema de Ponto</div>
+      <!-- Engrenagem: Visível apenas para o Admin CLX -->
       <button id="abrirConfigBtn" class="settings-btn hidden" title="Gerenciar Usuários">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 2 2 2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 2 2 2 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 2 2 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
       </button>
@@ -138,9 +145,7 @@
     </div>
   </header>
 
-  <!-- Aplicação Principal -->
   <main id="mainApp" class="hidden">
-    <!-- Dashboard de Estatísticas -->
     <div class="admin-panel">
       <div class="stat-card"><h4>Total Equipe</h4><div class="value" id="stat-total">0</div></div>
       <div class="stat-card green"><h4>Entradas Hoje</h4><div class="value" id="stat-entradas">0</div></div>
@@ -180,9 +185,8 @@
         </div>
     </div>
 
-    <!-- TABELA: RESUMO DE TEMPO (Apenas Ativos Hoje) -->
     <div style="margin-top: 20px;">
-        <h3 style="color: var(--red);">Resumo de Tempo Trabalhado (Apenas Quem Bateu Ponto Hoje)</h3>
+        <h3 style="color: var(--red);">Resumo de Tempo Trabalhado (Hoje)</h3>
         <table id="resumoTempoTable">
             <thead style="background: #fff5f5;">
                 <tr>
@@ -202,7 +206,44 @@
   © 2025 – Gerido por CLX
 </footer>
 
-<!-- MODAIS -->
+<!-- MODAL: RELATÓRIO INDIVIDUAL -->
+<div id="reportModal" class="modal hidden">
+  <div class="modal-content" style="max-width: 800px;">
+    <div class="no-print" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px">
+      <h3 style="margin:0">Relatório Detalhado</h3>
+      <div style="display:flex; gap:8px">
+        <button class="download" onclick="window.print()">🖨️ Imprimir</button>
+        <button class="secondary" id="fecharReportBtn">Fechar</button>
+      </div>
+    </div>
+    
+    <div id="reportContent">
+      <div class="report-header">
+        <div>
+          <h2 id="reportName" style="margin:0; color: var(--blue);">Nome do Colaborador</h2>
+          <p id="reportInfo" style="margin:5px 0 0; color: var(--muted); font-size:14px;">ID: 0000 | Cargo: Desenvolvedor</p>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:12px; text-transform:uppercase; color:var(--muted)">Total de Horas (Geral)</div>
+          <div id="reportTotalHours" style="font-size:24px; font-weight:800; color:var(--red)">0h 00m</div>
+        </div>
+      </div>
+
+      <h4>Histórico de Batidas</h4>
+      <table style="box-shadow:none; border: 1px solid #eee;">
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>Hora</th>
+            <th>Tipo</th>
+          </tr>
+        </thead>
+        <tbody id="reportTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
 <div id="configModal" class="modal hidden">
   <div class="modal-content">
     <h3>Configurações de Acesso (Master Only)</h3>
@@ -299,6 +340,10 @@ onSnapshot(collection(db, "usuarios_admin"), s => {
 document.getElementById('loginBtn').onclick = () => {
     const u = document.getElementById('user').value.trim();
     const p = document.getElementById('pass').value.trim();
+    efetuarLogin(u, p);
+};
+
+function efetuarLogin(u, p) {
     const isMaster = (u === 'CLX' && p === '02072007');
     const isOther = usuarios.some(x => x.user === u && x.pass === p);
 
@@ -311,13 +356,20 @@ document.getElementById('loginBtn').onclick = () => {
         document.getElementById('loginScreen').classList.add('hidden');
         document.getElementById('mainApp').classList.remove('hidden');
         document.getElementById('mainHeader').classList.remove('hidden');
+        
+        // MOSTRAR ENGRENAGEM APENAS PARA ADMIN MASTER
         const configBtn = document.getElementById('abrirConfigBtn');
-        if(isMaster) configBtn.classList.remove('hidden');
+        if(isMaster) {
+          configBtn.classList.remove('hidden');
+        } else {
+          configBtn.classList.add('hidden');
+        }
+
         if(!isAppInitialized) init();
     } else {
         document.getElementById('loginMsg').textContent = "Dados inválidos!";
     }
-};
+}
 
 document.getElementById('logoutBtn').onclick = () => {
     document.getElementById('mainApp').classList.add('hidden');
@@ -347,7 +399,9 @@ function renderColaboradores() {
     colaboradores.filter(c => c.nome.toLowerCase().includes(term) || c.id.includes(term))
       .sort((a,b) => a.nome.localeCompare(b.nome)).forEach(c => {
         body.innerHTML += `<tr><td>${c.id}</td><td><strong>${c.nome}</strong></td><td>${c.cargo}</td><td>${c.turno}</td>
-        <td><div style="display:flex; gap:5px"><button class="add" onclick="window.regManual('${c.id}', 'Entrada')">E</button>
+        <td><div style="display:flex; gap:5px">
+        <button class="info-btn" onclick="window.abrirRelatorio('${c.id}')">📄 Relatório</button>
+        <button class="add" onclick="window.regManual('${c.id}', 'Entrada')">E</button>
         <button class="secondary" onclick="window.regManual('${c.id}', 'Saída')">S</button>
         <button class="danger" onclick="window.delColab('${c.id}')">X</button></div></td></tr>`;
     });
@@ -372,9 +426,6 @@ function renderTabelas() {
     updateDashboard();
 }
 
-/**
- * FORMATAÇÃO DE TEMPO
- */
 function formatTime(ms) {
     const totalSegundos = Math.floor(ms / 1000);
     const h = Math.floor(totalSegundos / 3600);
@@ -383,9 +434,6 @@ function formatTime(ms) {
     return `${h}h ${m.toString().padStart(2, '0')}m ${s.toString().padStart(2, '0')}s`;
 }
 
-/**
- * CÁLCULO DE DASHBOARD E TABELA DE RESUMO
- */
 function updateDashboard() {
     const hojeStr = new Date().toLocaleDateString('pt-BR');
     const ptsHoje = pontos.filter(p => p.data === hojeStr);
@@ -401,15 +449,12 @@ function updateDashboard() {
     if(saiEl) saiEl.textContent = ptsHoje.filter(p => p.tipo === 'Saída').length;
     
     let totalMsGlobal = 0;
-    let colaboradoresAtivosCount = 0;
-    
     if(resumoBody) resumoBody.innerHTML = '';
 
-    // Filtramos colaboradores que bateram o ponto HOJE
     const idsAtivosHoje = [...new Set(ptsHoje.map(p => p.idColab))];
 
     if(idsAtivosHoje.length === 0) {
-        if(resumoBody) resumoBody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 20px; color: var(--muted)">Nenhum registo de ponto para hoje até ao momento.</td></tr>';
+        if(resumoBody) resumoBody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 20px; color: var(--muted)">Nenhum registo de ponto hoje.</td></tr>';
     } else {
         colaboradores
             .filter(c => idsAtivosHoje.includes(c.id))
@@ -422,7 +467,6 @@ function updateDashboard() {
                 let colabMs = 0;
                 let status = '<span style="color:var(--muted)">Ausente</span>';
                 
-                // Cálculo de tempo (Entrada -> Saída)
                 for(let i = 0; i < cPts.length - 1; i++) {
                     if(cPts[i].tipo === 'Entrada' && cPts[i+1].tipo === 'Saída') {
                         const diff = new Date(cPts[i+1].horarioISO) - new Date(cPts[i].horarioISO);
@@ -431,7 +475,6 @@ function updateDashboard() {
                     }
                 }
 
-                // Definir status visual do ponto atual
                 if(cPts.length > 0) {
                     const ultimo = cPts[cPts.length - 1];
                     status = ultimo.tipo === 'Entrada' ? 
@@ -440,7 +483,6 @@ function updateDashboard() {
                 }
 
                 totalMsGlobal += colabMs;
-                colaboradoresAtivosCount++;
 
                 if(resumoBody) {
                     resumoBody.innerHTML += `
@@ -455,29 +497,41 @@ function updateDashboard() {
             });
     }
 
-    if(horasEl) {
-        const novoTexto = formatTime(totalMsGlobal);
-        if(horasEl.textContent !== novoTexto) {
-            horasEl.textContent = novoTexto;
-            horasEl.style.color = '#ff0000';
-            setTimeout(() => horasEl.style.color = 'var(--red)', 200);
+    if(horasEl) horasEl.textContent = formatTime(totalMsGlobal);
+}
+
+window.abrirRelatorio = (idColab) => {
+    const colab = colaboradores.find(c => c.id === idColab);
+    if(!colab) return;
+    document.getElementById('reportName').textContent = colab.nome;
+    document.getElementById('reportInfo').textContent = `ID: ${colab.id} | Cargo: ${colab.cargo} | Turno: ${colab.turno}`;
+    const meusPontos = pontos.filter(p => p.idColab === idColab).sort((a,b) => new Date(b.horarioISO) - new Date(a.horarioISO));
+    const body = document.getElementById('reportTableBody');
+    body.innerHTML = '';
+    let totalMs = 0;
+    const ptsCalculo = [...meusPontos].sort((a,b) => new Date(a.horarioISO) - new Date(b.horarioISO));
+    for(let i = 0; i < ptsCalculo.length - 1; i++) {
+        if(ptsCalculo[i].tipo === 'Entrada' && ptsCalculo[i+1].tipo === 'Saída') {
+            const diff = new Date(ptsCalculo[i+1].horarioISO) - new Date(ptsCalculo[i].horarioISO);
+            if(diff > 0) totalMs += diff;
+            i++;
         }
     }
-}
+    document.getElementById('reportTotalHours').textContent = formatTime(totalMs);
+    meusPontos.forEach(p => {
+        const badgeClass = p.tipo === 'Entrada' ? 'badge-entrada' : 'badge-saida';
+        body.innerHTML += `<tr><td>${p.data}</td><td style="font-weight:700">${p.hora}</td><td><span class="report-badge ${badgeClass}">${p.tipo}</span></td></tr>`;
+    });
+    document.getElementById('reportModal').classList.remove('hidden');
+};
+
+document.getElementById('fecharReportBtn').onclick = () => document.getElementById('reportModal').classList.add('hidden');
 
 window.regManual = async (idColab, tipo) => {
     const c = colaboradores.find(x => x.id === idColab);
     if (!c) return;
     const now = new Date();
-    const p = { 
-        id: Date.now().toString(), 
-        idColab, 
-        nome: c.nome, 
-        tipo, 
-        data: now.toLocaleDateString('pt-BR'), 
-        hora: now.toLocaleTimeString('pt-BR', {hour12:false}), 
-        horarioISO: now.toISOString() 
-    };
+    const p = { id: Date.now().toString(), idColab, nome: c.nome, tipo, data: now.toLocaleDateString('pt-BR'), hora: now.toLocaleTimeString('pt-BR', {hour12:false}), horarioISO: now.toISOString() };
     await setDoc(doc(db, "pontos", p.id), p);
 };
 
@@ -485,7 +539,6 @@ window.delColab = async (id) => { if(confirm("Eliminar colaborador?")) await del
 window.delPonto = async (id) => { if(confirm("Apagar registo?")) await deleteDoc(doc(db, "pontos", id)); };
 window.delUser = async (id) => { if(confirm("Remover acesso?")) await deleteDoc(doc(db, "usuarios_admin", id)); };
 
-/* ---------- MODAIS & UI ---------- */
 document.getElementById('abrirConfigBtn').onclick = () => document.getElementById('configModal').classList.remove('hidden');
 document.getElementById('fecharConfigBtn').onclick = () => document.getElementById('configModal').classList.add('hidden');
 document.getElementById('addColabBtn').onclick = () => document.getElementById('colabModal').classList.remove('hidden');
@@ -495,14 +548,8 @@ document.getElementById('search').oninput = () => { renderColaboradores(); rende
 document.getElementById('saveColab').onclick = async () => {
     const n = document.getElementById('nomeInput').value;
     const id = Math.floor(1000 + Math.random() * 9000).toString();
-    await setDoc(doc(db, "colaboradores", id), { 
-        id, nome: n, 
-        email: document.getElementById('emailInput').value, 
-        cargo: document.getElementById('cargoInput').value, 
-        turno: document.getElementById('turnoInput').value 
-    });
+    await setDoc(doc(db, "colaboradores", id), { id, nome: n, email: document.getElementById('emailInput').value, cargo: document.getElementById('cargoInput').value, turno: document.getElementById('turnoInput').value });
     document.getElementById('colabModal').classList.add('hidden');
-    document.getElementById('nomeInput').value = ''; 
 };
 
 document.getElementById('saveUserBtn').onclick = async () => {
@@ -522,7 +569,6 @@ document.getElementById('abrirGalleryBtn').onclick = () => {
     document.getElementById('qrGalleryModal').classList.remove('hidden');
 };
 
-document.getElementById('baixarCrachasBtn').onclick = () => window.print();
 document.getElementById('fecharGalleryBtn').onclick = () => document.getElementById('qrGalleryModal').classList.add('hidden');
 
 document.getElementById('abrirScannerBtn').onclick = async () => {
@@ -582,9 +628,13 @@ setInterval(() => {
 
 window.addEventListener('load', () => {
     if(localStorage.getItem('ponto_remember') === 'true') {
-        document.getElementById('user').value = localStorage.getItem('ponto_user');
-        document.getElementById('pass').value = localStorage.getItem('ponto_pass');
+        const u = localStorage.getItem('ponto_user');
+        const p = localStorage.getItem('ponto_pass');
+        document.getElementById('user').value = u;
+        document.getElementById('pass').value = p;
         document.getElementById('rememberMe').checked = true;
+        // Se já houver dados guardados, efetua o login automaticamente para validar o ícone de config
+        setTimeout(() => efetuarLogin(u, p), 500);
     }
 });
 </script>
