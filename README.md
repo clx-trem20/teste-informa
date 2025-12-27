@@ -85,9 +85,10 @@
   @media print {
     body * { visibility: hidden; }
     #qrGalleryModal, #qrGalleryModal * { visibility: visible; }
-    #qrGalleryModal { position: absolute; left: 0; top: 0; width: 100%; z-index: 11000; background: white; }
+    #qrGalleryModal { position: fixed; left: 0; top: 0; width: 100%; height: 100%; z-index: 11000; background: white; margin: 0; padding: 20px; }
     .no-print { display: none !important; }
-    .qr-grid { grid-template-columns: repeat(3, 1fr) !important; display: grid !important; }
+    .qr-grid { grid-template-columns: repeat(3, 1fr) !important; display: grid !important; gap: 20px !important; }
+    .qr-card { border: 1px solid #ccc !important; break-inside: avoid; }
     footer { display: none; }
   }
 </style>
@@ -104,7 +105,6 @@
         <p style="color: var(--muted); font-size: 14px; margin-top: 5px;">Gerenciamento de Ponto Eletrônico</p>
       </div>
       
-      <!-- Campos com autocomplete desativado -->
       <input id="user" placeholder="Usuário" autocomplete="off" style="width:100%;padding:14px;margin:8px 0;border-radius:8px;border:1px solid #e5e7eb; box-sizing: border-box; font-size: 16px;">
       <input id="pass" type="password" placeholder="Senha" autocomplete="new-password" style="width:100%;padding:14px;margin:8px 0;border-radius:8px;border:1px solid #e5e7eb; box-sizing: border-box; font-size: 16px;">
       
@@ -231,7 +231,7 @@
     <div class="no-print" style="display:flex; justify-content:space-between; margin-bottom:20px">
       <h3 style="margin:0">Galeria de Crachás</h3>
       <div style="display:flex; gap:10px">
-        <button class="download" id="baixarCrachasBtn">💾 Baixar Crachás (PDF)</button>
+        <button class="download" id="baixarCrachasBtn">💾 Gerar PDF / Imprimir</button>
         <button class="secondary" id="fecharGalleryBtn">Fechar</button>
       </div>
     </div>
@@ -279,7 +279,6 @@ let lastScanTime = 0;
 let isAppInitialized = false;
 
 /* ---------- LOGIN E AUTH ---------- */
-// Monitora usuários admin
 onSnapshot(collection(db, "usuarios_admin"), s => {
     usuarios = s.docs.map(d => ({id: d.id, ...d.data()}));
     const b = document.getElementById('usersBody'); 
@@ -296,7 +295,6 @@ document.getElementById('loginBtn').onclick = () => {
     const isOther = usuarios.some(x => x.user === u && x.pass === p);
 
     if(isMaster || isOther) {
-        // Se a checkbox estiver marcada, salva. Se não, limpa o que tinha.
         if(document.getElementById('rememberMe').checked) {
             localStorage.setItem('ponto_user', u); 
             localStorage.setItem('ponto_pass', p);
@@ -320,33 +318,23 @@ document.getElementById('loginBtn').onclick = () => {
     }
 };
 
-/* Logout: Limpa os campos para que o login não "fique aparecendo" se você não quiser */
 document.getElementById('logoutBtn').onclick = () => {
     document.getElementById('mainApp').classList.add('hidden');
     document.getElementById('mainHeader').classList.add('hidden');
     document.getElementById('loginScreen').classList.remove('hidden');
-    
-    // Limpeza visual obrigatória ao deslogar
     document.getElementById('user').value = '';
     document.getElementById('pass').value = '';
-    
-    // Se NÃO estiver configurado para lembrar, a checkbox desmarca também
     if(localStorage.getItem('ponto_remember') !== 'true') {
         document.getElementById('rememberMe').checked = false;
     }
 };
 
-/* No carregamento da página */
 window.onload = () => {
-    // Primeiro, garante que os campos começam vazios
     document.getElementById('user').value = '';
     document.getElementById('pass').value = '';
-
     const remember = localStorage.getItem('ponto_remember');
     const rU = localStorage.getItem('ponto_user');
     const rP = localStorage.getItem('ponto_pass');
-    
-    // SÓ preenche se o usuário marcou a opção anteriormente
     if(remember === 'true' && rU && rP) { 
         document.getElementById('user').value = rU; 
         document.getElementById('pass').value = rP; 
@@ -391,19 +379,74 @@ function renderTabelas() {
     const term = document.getElementById('search').value.toLowerCase();
     if(!entBody || !saiBody || !horasBody) return;
     entBody.innerHTML = ''; saiBody.innerHTML = ''; horasBody.innerHTML = '';
-    pontos.filter(p => p.nome.toLowerCase().includes(term) || p.idColab.includes(term)).sort((a,b) => new Date(b.horarioISO) - new Date(a.horarioISO)).forEach(p => {
+    
+    // Filtro básico de busca
+    const pontosFiltrados = pontos.filter(p => p.nome.toLowerCase().includes(term) || p.idColab.includes(term));
+    
+    pontosFiltrados.sort((a,b) => new Date(b.horarioISO) - new Date(a.horarioISO)).forEach(p => {
         const row = `<tr><td>${p.idColab}</td><td>${p.nome}</td><td>${p.data}</td><td>${p.hora}</td><td><button class="danger" onclick="window.delPonto('${p.id}')">Excluir</button></td></tr>`;
         if (p.tipo === 'Entrada') entBody.innerHTML += row; else saiBody.innerHTML += row;
     });
+
+    // Renderizar resumo de tempo por colaborador (Hoje)
+    const hojeStr = new Date().toLocaleDateString('pt-BR');
+    const pontosHoje = pontos.filter(p => p.data === hojeStr);
+    
+    // Agrupar por colaborador
+    const colabsHoje = [...new Set(pontosHoje.map(p => p.idColab))];
+    colabsHoje.forEach(cid => {
+        const cPontos = pontosHoje.filter(p => p.idColab === cid).sort((a,b) => new Date(a.horarioISO) - new Date(b.horarioISO));
+        const cNome = cPontos[0].nome;
+        let totalMs = 0;
+        
+        for(let i=0; i < cPontos.length; i++){
+           if(cPontos[i].tipo === 'Entrada' && cPontos[i+1] && cPontos[i+1].tipo === 'Saída'){
+               totalMs += new Date(cPontos[i+1].horarioISO) - new Date(cPontos[i].horarioISO);
+               i++; // pula a saída já processada
+           }
+        }
+        
+        const h = Math.floor(totalMs / 3600000);
+        const m = Math.floor((totalMs % 3600000) / 60000);
+        const s = Math.floor((totalMs % 60000) / 1000);
+        
+        horasBody.innerHTML += `<tr><td>${cNome}</td><td>${hojeStr}</td><td><strong>${h}h ${m}m ${s}s</strong></td></tr>`;
+    });
+
     updateDashboard();
 }
 
 function updateDashboard() {
     const hojeStr = new Date().toLocaleDateString('pt-BR');
     const ptsHoje = pontos.filter(p => p.data === hojeStr);
-    document.getElementById('stat-total').textContent = colaboradores.length;
-    document.getElementById('stat-entradas').textContent = ptsHoje.filter(p => p.tipo === 'Entrada').length;
-    document.getElementById('stat-saidas').textContent = ptsHoje.filter(p => p.tipo === 'Saída').length;
+    
+    const totalEl = document.getElementById('stat-total');
+    const entEl = document.getElementById('stat-entradas');
+    const saiEl = document.getElementById('stat-saidas');
+    const hrsEl = document.getElementById('stat-horas');
+    
+    if(totalEl) totalEl.textContent = colaboradores.length;
+    if(entEl) entEl.textContent = ptsHoje.filter(p => p.tipo === 'Entrada').length;
+    if(saiEl) saiEl.textContent = ptsHoje.filter(p => p.tipo === 'Saída').length;
+    
+    // Cálculo total de horas trabalhadas por todos os colaboradores hoje
+    let totalGlobalMs = 0;
+    const colabIds = [...new Set(ptsHoje.map(p => p.idColab))];
+    
+    colabIds.forEach(cid => {
+        const cPts = ptsHoje.filter(p => p.idColab === cid).sort((a,b) => new Date(a.horarioISO) - new Date(b.horarioISO));
+        for(let i=0; i < cPts.length; i++){
+           if(cPts[i].tipo === 'Entrada' && cPts[i+1] && cPts[i+1].tipo === 'Saída'){
+               totalGlobalMs += new Date(cPts[i+1].horarioISO) - new Date(cPts[i].horarioISO);
+               i++;
+           }
+        }
+    });
+
+    const h = Math.floor(totalGlobalMs / 3600000);
+    const m = Math.floor((totalGlobalMs % 3600000) / 60000);
+    const s = Math.floor((totalGlobalMs % 60000) / 1000);
+    if(hrsEl) hrsEl.textContent = `${h}h ${m}m ${s}s`;
 }
 
 window.regManual = async (idColab, tipo) => {
@@ -430,12 +473,18 @@ document.getElementById('saveColab').onclick = async () => {
     const id = Math.floor(1000 + Math.random() * 9000).toString();
     await setDoc(doc(db, "colaboradores", id), { id, nome: n, email: em, cargo: c, turno: t });
     document.getElementById('colabModal').classList.add('hidden');
+    document.getElementById('nomeInput').value = '';
+    document.getElementById('emailInput').value = '';
+    document.getElementById('cargoInput').value = '';
+    document.getElementById('turnoInput').value = '';
 };
 
 document.getElementById('saveUserBtn').onclick = async () => {
     const u = document.getElementById('newUserLogin').value.trim(), p = document.getElementById('newUserPass').value.trim();
     if(!u || !p) return alert("Preencha login e senha");
     await setDoc(doc(db, "usuarios_admin", Date.now().toString()), { id: Date.now().toString(), user: u, pass: p });
+    document.getElementById('newUserLogin').value = '';
+    document.getElementById('newUserPass').value = '';
 };
 
 document.getElementById('abrirGalleryBtn').onclick = () => {
@@ -447,6 +496,10 @@ document.getElementById('abrirGalleryBtn').onclick = () => {
         new QRCode(document.getElementById(`qr-${c.id}`), { text: String(c.id), width: 120, height: 120 });
     });
     document.getElementById('qrGalleryModal').classList.remove('hidden');
+};
+
+document.getElementById('baixarCrachasBtn').onclick = () => {
+    window.print();
 };
 
 document.getElementById('fecharGalleryBtn').onclick = () => document.getElementById('qrGalleryModal').classList.add('hidden');
@@ -479,6 +532,7 @@ function tick() {
                 const tipo = (meusPts.length > 0 && meusPts[0].tipo === 'Entrada') ? 'Saída' : 'Entrada';
                 window.regManual(colab.id, tipo);
                 document.getElementById('scanner-feedback').textContent = `REGISTRADO: ${tipo} - ${colab.nome}`;
+                setTimeout(() => { if(document.getElementById('scanner-feedback')) document.getElementById('scanner-feedback').textContent = "Aguardando QR Code..."; }, 2000);
             }
         }
     }
@@ -493,7 +547,7 @@ document.getElementById('baixarBtn').onclick = () => {
 };
 
 document.getElementById('limparPontosBtn').onclick = async () => {
-    if(confirm("Apagar todos os pontos?")) {
+    if(confirm("Apagar todos os pontos? Esta ação não pode ser desfeita.")) {
         const snap = await getDocs(collection(db, "pontos"));
         snap.forEach(d => deleteDoc(doc(db, "pontos", d.id)));
     }
