@@ -13,7 +13,6 @@
   }
   body{font-family:Inter, system-ui, -apple-system, Arial, sans-serif;background:var(--bg);margin:0;color:#111; display: flex; flex-direction: column; min-height: 100vh;}
   
-  /* Estrutura para manter o footer sempre visível */
   #app-container { flex: 1; display: flex; flex-direction: column; width: 100%; position: relative; }
 
   header{background:linear-gradient(90deg,var(--blue),#0f6b96);color:#fff;padding:12px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
@@ -35,15 +34,25 @@
   
   footer { text-align: center; padding: 20px; color: var(--muted); font-size: 14px; border-top: 1px solid #e2e8f0; background: #fff; width: 100%; box-sizing: border-box; z-index: 10000; }
 
-  /* Login Screen Ajustado */
   #loginScreen {
-    position: absolute;
+    position: fixed;
     inset: 0;
     background: var(--blue);
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 9000; /* Menor que o footer se necessário, mas aqui ele cobre apenas o container */
+    z-index: 11000;
+    padding: 20px;
+  }
+
+  .login-card {
+    background: #fff;
+    padding: 40px 30px;
+    border-radius: 16px;
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.3);
   }
 
   .admin-panel { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 25px; margin-top: 10px; }
@@ -62,7 +71,7 @@
   
   .modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:9999}
   .modal-content{background:#fff;padding:22px;border-radius:12px;width:95%;max-width:720px;max-height: 90vh;overflow-y: auto;}
-  .hidden{display:none}
+  .hidden{display:none !important}
   
   #video-container { position: relative; width: 100%; max-width: 350px; aspect-ratio: 1; margin: 0 auto; background: #000; border-radius: 12px; overflow: hidden; border: 4px solid var(--indigo); }
   #video-preview { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
@@ -88,18 +97,23 @@
 <div id="app-container">
   <!-- Ecrã de Login -->
   <div id="loginScreen">
-    <div style="background:#fff;padding:30px;border-radius:12px;width:92%;max-width:360px;text-align:center; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
-      <h2 style="margin:0 0 10px 0;color:var(--blue)">Acesso ao Sistema</h2>
-      <input id="user" placeholder="Usuário" style="width:100%;padding:12px;margin:8px 0;border-radius:8px;border:1px solid #e5e7eb; box-sizing: border-box;">
-      <input id="pass" type="password" placeholder="Senha" style="width:100%;padding:12px;margin:8px 0;border-radius:8px;border:1px solid #e5e7eb; box-sizing: border-box;">
+    <div class="login-card">
+      <div style="margin-bottom: 25px;">
+        <div style="background: var(--blue); color: white; width: 60px; height: 60px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px; font-size: 24px; font-weight: bold;">CLX</div>
+        <h2 style="margin:0;color:var(--blue); font-size: 22px;">Acesso ao Sistema</h2>
+        <p style="color: var(--muted); font-size: 14px; margin-top: 5px;">Gerenciamento de Ponto Eletrônico</p>
+      </div>
       
-      <div style="display: flex; align-items: center; gap: 8px; margin: 10px 0; font-size: 14px; color: var(--muted); justify-content: start;">
-        <input type="checkbox" id="rememberMe" style="cursor: pointer;">
+      <input id="user" placeholder="Usuário" style="width:100%;padding:14px;margin:8px 0;border-radius:8px;border:1px solid #e5e7eb; box-sizing: border-box; font-size: 16px;">
+      <input id="pass" type="password" placeholder="Senha" style="width:100%;padding:14px;margin:8px 0;border-radius:8px;border:1px solid #e5e7eb; box-sizing: border-box; font-size: 16px;">
+      
+      <div style="display: flex; align-items: center; gap: 8px; margin: 15px 0; font-size: 15px; color: var(--muted); justify-content: start;">
+        <input type="checkbox" id="rememberMe" style="width: 18px; height: 18px; cursor: pointer;">
         <label for="rememberMe" style="cursor: pointer;">Lembrar login</label>
       </div>
 
-      <button id="loginBtn" class="add" style="width:100%;margin-top:15px; padding: 12px; justify-content: center;">Entrar</button>
-      <p id="loginMsg" style="color:var(--red);margin-top:12px;height:18px; font-size: 13px"></p>
+      <button id="loginBtn" class="add" style="width:100%;margin-top:10px; padding: 14px; justify-content: center; font-size: 16px;">Entrar no Sistema</button>
+      <p id="loginMsg" style="color:var(--red);margin-top:15px;height:20px; font-size: 14px; font-weight: 600;"></p>
     </div>
   </div>
 
@@ -108,7 +122,7 @@
     <div style="display:flex;gap:12px;align-items:center">
       <div class="logo">Sistema de Ponto</div>
       <button id="abrirConfigBtn" class="settings-btn hidden" title="Configurações de Acesso">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 2 2 2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 2 2 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
       </button>
     </div>
     <div style="display:flex;gap:12px;align-items:center">
@@ -122,7 +136,6 @@
     </div>
   </header>
 
-  <!-- Conteúdo Principal -->
   <main id="mainApp" class="hidden">
     <div class="admin-panel">
       <div class="stat-card">
@@ -175,7 +188,6 @@
   </main>
 </div>
 
-<!-- Rodapé sempre visível na base do body -->
 <footer id="mainFooter">
   © 2025 – Criado por CLX
 </footer>
@@ -262,8 +274,9 @@ let pontos = [];
 let usuarios = [];
 let scanning = false;
 let lastScanTime = 0;
+let isAppInitialized = false;
 
-/* ---------- FUNÇÕES GLOBAIS (WINDOW) ---------- */
+/* ---------- FUNÇÕES GLOBAIS ---------- */
 window.delColab = async (id) => {
     if(confirm("Deseja remover este colaborador e todos os seus registros?")) {
         await deleteDoc(doc(db, "colaboradores", id));
@@ -324,9 +337,10 @@ function renderTabelas() {
     const horasBody = document.getElementById('horasBody');
     const term = document.getElementById('search').value.toLowerCase();
     
+    if(!entBody || !saiBody || !horasBody) return;
+
     entBody.innerHTML = ''; saiBody.innerHTML = ''; horasBody.innerHTML = '';
     
-    // Filtros e Tabelas de Ponto
     const ptsFiltrados = pontos
       .filter(p => p.nome.toLowerCase().includes(term) || p.idColab.includes(term))
       .sort((a,b) => new Date(b.horarioISO) - new Date(a.horarioISO));
@@ -336,7 +350,6 @@ function renderTabelas() {
         if (p.tipo === 'Entrada') entBody.innerHTML += row; else saiBody.innerHTML += row;
     });
 
-    // Cálculo de Resumo de Horas (Hoje)
     const hoje = new Date().toLocaleDateString('pt-BR');
     const ptsHoje = pontos.filter(p => p.data === hoje);
     
@@ -363,7 +376,6 @@ function renderTabelas() {
         horasBody.innerHTML += `<tr><td>${r.nome}</td><td>${r.data}</td><td>${tempoTxt}</td></tr>`;
     });
 
-    // Update Stat Card Horas (com segundos)
     const hG = Math.floor(totalMsGeral / 3600000);
     const mG = Math.floor((totalMsGeral % 3600000) / 60000);
     const sG = Math.floor((totalMsGeral % 60000) / 1000);
@@ -372,68 +384,32 @@ function renderTabelas() {
     updateDashboard();
 }
 
-function renderCrachas() {
-    const grid = document.getElementById('qrGridContent');
-    grid.innerHTML = '';
-    colaboradores.forEach(c => {
-        const card = document.createElement('div');
-        card.className = 'qr-card';
-        card.innerHTML = `<strong>${c.nome}</strong><br><small>${c.cargo}</small><div class="qr-img" id="qr-${c.id}"></div><small>ID: ${c.id}</small>`;
-        grid.appendChild(card);
-        new QRCode(document.getElementById(`qr-${c.id}`), { text: String(c.id), width: 120, height: 120 });
-    });
-}
-
 function updateDashboard() {
     const hojeStr = new Date().toLocaleDateString('pt-BR');
     const ptsHoje = pontos.filter(p => p.data === hojeStr);
-    document.getElementById('stat-total').textContent = colaboradores.length;
-    document.getElementById('stat-entradas').textContent = ptsHoje.filter(p => p.tipo === 'Entrada').length;
-    document.getElementById('stat-saidas').textContent = ptsHoje.filter(p => p.tipo === 'Saída').length;
+    const totalEl = document.getElementById('stat-total');
+    if(totalEl) totalEl.textContent = colaboradores.length;
+    
+    const entEl = document.getElementById('stat-entradas');
+    if(entEl) entEl.textContent = ptsHoje.filter(p => p.tipo === 'Entrada').length;
+    
+    const saiEl = document.getElementById('stat-saidas');
+    if(saiEl) saiEl.textContent = ptsHoje.filter(p => p.tipo === 'Saída').length;
 }
-
-/* ---------- EXPORTAR EXCEL ---------- */
-document.getElementById('baixarBtn').onclick = () => {
-    if(pontos.length === 0) return alert("Nenhum registro para exportar.");
-    
-    // Filtrar dados por tipo
-    const entradas = pontos.filter(p => p.tipo === 'Entrada').map(p => ({
-        ID: p.idColab,
-        Nome: p.nome,
-        Data: p.data,
-        Hora: p.hora
-    }));
-
-    const saidas = pontos.filter(p => p.tipo === 'Saída').map(p => ({
-        ID: p.idColab,
-        Nome: p.nome,
-        Data: p.data,
-        Hora: p.hora
-    }));
-
-    // Criar abas
-    const wsEntradas = XLSX.utils.json_to_sheet(entradas);
-    const wsSaidas = XLSX.utils.json_to_sheet(saidas);
-    
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, wsEntradas, "Entradas");
-    XLSX.utils.book_append_sheet(workbook, wsSaidas, "Saídas");
-    
-    XLSX.writeFile(workbook, `Ponto_Eletronico_${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}.xlsx`);
-};
 
 /* ---------- LOGIN E AUTH ---------- */
-function loadRememberedUser() {
-    const u = localStorage.getItem('ponto_user'), p = localStorage.getItem('ponto_pass');
-    if (u && p) {
-        document.getElementById('user').value = u;
-        document.getElementById('pass').value = p;
-        document.getElementById('rememberMe').checked = true;
-    }
-}
+onSnapshot(collection(db, "usuarios_admin"), s => {
+    usuarios = s.docs.map(d => ({id: d.id, ...d.data()}));
+    const b = document.getElementById('usersBody'); 
+    if(!b) return;
+    b.innerHTML = '';
+    usuarios.forEach(u => b.innerHTML += `<tr><td>${u.user}</td><td>***</td><td><button class="danger" onclick="window.delUser('${u.id}')">X</button></td></tr>`);
+});
 
 document.getElementById('loginBtn').onclick = () => {
-    const u = document.getElementById('user').value, p = document.getElementById('pass').value;
+    const u = document.getElementById('user').value.trim();
+    const p = document.getElementById('pass').value.trim();
+    
     const isMaster = (u === 'CLX' && p === '02072007');
     const isOther = usuarios.some(x => x.user === u && x.pass === p);
 
@@ -443,18 +419,23 @@ document.getElementById('loginBtn').onclick = () => {
         } else {
             localStorage.removeItem('ponto_user'); localStorage.removeItem('ponto_pass');
         }
-        document.getElementById('loginScreen').style.display = 'none';
+        
+        document.getElementById('loginScreen').classList.add('hidden');
         document.getElementById('mainApp').classList.remove('hidden');
         document.getElementById('mainHeader').classList.remove('hidden');
+        
         if(isMaster) document.getElementById('abrirConfigBtn').classList.remove('hidden');
-        init();
+        
+        if(!isAppInitialized) init();
     } else {
-        document.getElementById('loginMsg').textContent = "Acesso negado.";
+        document.getElementById('loginMsg').textContent = "Usuário ou Senha incorretos!";
+        setTimeout(() => { if(document.getElementById('loginMsg')) document.getElementById('loginMsg').textContent = ""; }, 3000);
     }
 };
 
 /* ---------- CORE INIT ---------- */
 function init() {
+    isAppInitialized = true;
     onSnapshot(collection(db, "colaboradores"), s => {
         colaboradores = s.docs.map(d => ({id: d.id, ...d.data()}));
         renderColaboradores();
@@ -462,11 +443,6 @@ function init() {
     onSnapshot(collection(db, "pontos"), s => {
         pontos = s.docs.map(d => ({id: d.id, ...d.data()}));
         renderTabelas();
-    });
-    onSnapshot(collection(db, "usuarios_admin"), s => {
-        usuarios = s.docs.map(d => ({id: d.id, ...d.data()}));
-        const b = document.getElementById('usersBody'); b.innerHTML = '';
-        usuarios.forEach(u => b.innerHTML += `<tr><td>${u.user}</td><td>***</td><td><button class="danger" onclick="window.delUser('${u.id}')">X</button></td></tr>`);
     });
 }
 
@@ -487,20 +463,33 @@ document.getElementById('saveColab').onclick = async () => {
     document.getElementById('colabModal').classList.add('hidden');
 };
 
-document.getElementById('abrirGalleryBtn').onclick = () => {
-    renderCrachas();
-    document.getElementById('qrGalleryModal').classList.remove('hidden');
+document.getElementById('saveUserBtn').onclick = async () => {
+    const u = document.getElementById('newUserLogin').value.trim(), p = document.getElementById('newUserPass').value.trim();
+    if(!u || !p) return alert("Preencha login e senha");
+    const id = Date.now().toString();
+    await setDoc(doc(db, "usuarios_admin", id), { id, user: u, pass: p });
+    document.getElementById('newUserLogin').value = '';
+    document.getElementById('newUserPass').value = '';
 };
-document.getElementById('fecharGalleryBtn').onclick = () => document.getElementById('qrGalleryModal').classList.add('hidden');
 
+function renderCrachas() {
+    const grid = document.getElementById('qrGridContent'); grid.innerHTML = '';
+    colaboradores.forEach(c => {
+        const card = document.createElement('div'); card.className = 'qr-card';
+        card.innerHTML = `<strong>${c.nome}</strong><br><small>${c.cargo}</small><div class="qr-img" id="qr-${c.id}"></div><small>ID: ${c.id}</small>`;
+        grid.appendChild(card);
+        new QRCode(document.getElementById(`qr-${c.id}`), { text: String(c.id), width: 120, height: 120 });
+    });
+}
+
+document.getElementById('abrirGalleryBtn').onclick = () => { renderCrachas(); document.getElementById('qrGalleryModal').classList.remove('hidden'); };
+document.getElementById('fecharGalleryBtn').onclick = () => document.getElementById('qrGalleryModal').classList.add('hidden');
 document.getElementById('abrirScannerBtn').onclick = async () => {
     document.getElementById('scannerModal').classList.remove('hidden');
     try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
         document.getElementById('video-preview').srcObject = stream; scanning = true; requestAnimationFrame(tick);
-    } catch(e) {
-        alert("Erro ao acessar câmera: " + e.message);
-    }
+    } catch(e) { alert("Câmera não disponível"); }
 };
 document.getElementById('fecharScannerBtn').onclick = () => {
     scanning = false; if(document.getElementById('video-preview').srcObject) document.getElementById('video-preview').srcObject.getTracks().forEach(t => t.stop());
@@ -531,23 +520,36 @@ function tick() {
     requestAnimationFrame(tick);
 }
 
-document.getElementById('saveUserBtn').onclick = async () => {
-    const u = document.getElementById('newUserLogin').value, p = document.getElementById('newUserPass').value;
-    if(!u || !p) return alert("Preencha login e senha");
-    const id = Date.now().toString();
-    await setDoc(doc(db, "usuarios_admin", id), { id, user: u, pass: p });
-    document.getElementById('newUserLogin').value = '';
-    document.getElementById('newUserPass').value = '';
-};
-
 document.getElementById('abrirConfigBtn').onclick = () => document.getElementById('configModal').classList.remove('hidden');
 document.getElementById('fecharConfigBtn').onclick = () => document.getElementById('configModal').classList.add('hidden');
 document.getElementById('addColabBtn').onclick = () => document.getElementById('colabModal').classList.remove('hidden');
 document.getElementById('cancelColab').onclick = () => document.getElementById('colabModal').classList.add('hidden');
-document.getElementById('logoutBtn').onclick = () => location.reload();
 
-loadRememberedUser();
-setInterval(() => { document.getElementById('clock').textContent = new Date().toLocaleTimeString('pt-BR'); }, 1000);
+// LOGOUT CORRIGIDO PARA EVITAR TELA BRANCA
+document.getElementById('logoutBtn').onclick = () => {
+    // Esconder tudo
+    document.getElementById('mainApp').classList.add('hidden');
+    document.getElementById('mainHeader').classList.add('hidden');
+    document.getElementById('configModal').classList.add('hidden');
+    document.getElementById('abrirConfigBtn').classList.add('hidden');
+    
+    // Mostrar tela de login
+    document.getElementById('loginScreen').classList.remove('hidden');
+    
+    // Limpar campos de senha se não estiver "lembrar"
+    if(!document.getElementById('rememberMe').checked) {
+        document.getElementById('user').value = '';
+        document.getElementById('pass').value = '';
+    }
+};
+
+const rU = localStorage.getItem('ponto_user'), rP = localStorage.getItem('ponto_pass');
+if(rU && rP) { document.getElementById('user').value = rU; document.getElementById('pass').value = rP; document.getElementById('rememberMe').checked = true; }
+
+setInterval(() => { 
+    const clockEl = document.getElementById('clock');
+    if(clockEl) clockEl.textContent = new Date().toLocaleTimeString('pt-BR'); 
+}, 1000);
 </script>
 </body>
 </html>
