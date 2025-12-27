@@ -156,7 +156,7 @@
       </div>
     </div>
 
-    <input id="search" class="search" placeholder="🔍 Filtrar lista de colaboradores ou registros...">
+    <input id="search" class="search" placeholder="🔍 Filtrar lista de colaboradores, e-mails ou registros...">
 
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
       <h3 style="margin:0">Equipe</h3>
@@ -164,7 +164,7 @@
     </div>
 
     <table id="colabTable">
-      <thead><tr><th>ID</th><th>Nome</th><th>Cargo</th><th>Turno</th><th>Ações</th></tr></thead>
+      <thead><tr><th>ID</th><th>Nome / E-mail</th><th>Cargo</th><th>Turno</th><th>Ações</th></tr></thead>
       <tbody id="colabBody"></tbody>
     </table>
 
@@ -242,6 +242,7 @@
   <div class="modal-content" style="max-width:400px">
     <h3 id="colabModalTitle">Novo Registro</h3>
     <input id="nomeInput" placeholder="Nome Completo" style="width:100%;padding:12px;margin:8px 0;border-radius:8px;border:1px solid #e5e7eb; box-sizing: border-box;">
+    <input id="emailInput" type="email" placeholder="E-mail Corporativo" style="width:100%;padding:12px;margin:8px 0;border-radius:8px;border:1px solid #e5e7eb; box-sizing: border-box;">
     <input id="cargoInput" placeholder="Cargo" style="width:100%;padding:12px;margin:8px 0;border-radius:8px;border:1px solid #e5e7eb; box-sizing: border-box;">
     <input id="turnoInput" placeholder="Turno (Ex: 08:00 - 17:00)" style="width:100%;padding:12px;margin:8px 0;border-radius:8px;border:1px solid #e5e7eb; box-sizing: border-box;">
     <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:15px">
@@ -316,10 +317,15 @@ function renderColaboradores() {
     body.innerHTML = '';
     
     colaboradores
-      .filter(c => c.nome.toLowerCase().includes(term) || c.id.includes(term))
+      .filter(c => c.nome.toLowerCase().includes(term) || (c.email || "").toLowerCase().includes(term) || c.id.includes(term))
       .sort((a,b) => a.nome.localeCompare(b.nome))
       .forEach(c => {
-        body.innerHTML += `<tr><td>${c.id}</td><td>${c.nome}</td><td>${c.cargo}</td><td>${c.turno}</td>
+        const emailDisplay = c.email ? `<br><small style="color:var(--muted)">${c.email}</small>` : '';
+        body.innerHTML += `<tr>
+        <td>${c.id}</td>
+        <td><strong>${c.nome}</strong>${emailDisplay}</td>
+        <td>${c.cargo}</td>
+        <td>${c.turno}</td>
         <td>
             <div style="display:flex; gap:5px">
               <button class="add" onclick="window.regManual('${c.id}', 'Entrada')" title="Entrada">E</button>
@@ -453,11 +459,16 @@ document.getElementById('search').oninput = () => {
 };
 
 document.getElementById('saveColab').onclick = async () => {
-    const n = document.getElementById('nomeInput').value, c = document.getElementById('cargoInput').value, t = document.getElementById('turnoInput').value;
+    const n = document.getElementById('nomeInput').value, 
+          em = document.getElementById('emailInput').value,
+          c = document.getElementById('cargoInput').value, 
+          t = document.getElementById('turnoInput').value;
     if(!n) return alert("Nome é obrigatório");
     const id = Math.floor(1000 + Math.random() * 9000).toString();
-    await setDoc(doc(db, "colaboradores", id), { id, nome: n, cargo: c, turno: t });
+    await setDoc(doc(db, "colaboradores", id), { id, nome: n, email: em, cargo: c, turno: t });
+    
     document.getElementById('nomeInput').value = '';
+    document.getElementById('emailInput').value = '';
     document.getElementById('cargoInput').value = '';
     document.getElementById('turnoInput').value = '';
     document.getElementById('colabModal').classList.add('hidden');
@@ -476,7 +487,8 @@ function renderCrachas() {
     const grid = document.getElementById('qrGridContent'); grid.innerHTML = '';
     colaboradores.forEach(c => {
         const card = document.createElement('div'); card.className = 'qr-card';
-        card.innerHTML = `<strong>${c.nome}</strong><br><small>${c.cargo}</small><div class="qr-img" id="qr-${c.id}"></div><small>ID: ${c.id}</small>`;
+        const emailLine = c.email ? `<small style="display:block;margin-bottom:5px;color:var(--muted)">${c.email}</small>` : '';
+        card.innerHTML = `<strong>${c.nome}</strong>${emailLine}<small>${c.cargo}</small><div class="qr-img" id="qr-${c.id}"></div><small>ID: ${c.id}</small>`;
         grid.appendChild(card);
         new QRCode(document.getElementById(`qr-${c.id}`), { text: String(c.id), width: 120, height: 120 });
     });
@@ -525,18 +537,12 @@ document.getElementById('fecharConfigBtn').onclick = () => document.getElementBy
 document.getElementById('addColabBtn').onclick = () => document.getElementById('colabModal').classList.remove('hidden');
 document.getElementById('cancelColab').onclick = () => document.getElementById('colabModal').classList.add('hidden');
 
-// LOGOUT CORRIGIDO PARA EVITAR TELA BRANCA
 document.getElementById('logoutBtn').onclick = () => {
-    // Esconder tudo
     document.getElementById('mainApp').classList.add('hidden');
     document.getElementById('mainHeader').classList.add('hidden');
     document.getElementById('configModal').classList.add('hidden');
     document.getElementById('abrirConfigBtn').classList.add('hidden');
-    
-    // Mostrar tela de login
     document.getElementById('loginScreen').classList.remove('hidden');
-    
-    // Limpar campos de senha se não estiver "lembrar"
     if(!document.getElementById('rememberMe').checked) {
         document.getElementById('user').value = '';
         document.getElementById('pass').value = '';
