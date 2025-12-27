@@ -85,9 +85,9 @@
   @media print {
     body * { visibility: hidden; }
     #qrGalleryModal, #qrGalleryModal * { visibility: visible; }
-    #qrGalleryModal { position: absolute; left: 0; top: 0; width: 100%; z-index: 10000; background: white; }
+    #qrGalleryModal { position: absolute; left: 0; top: 0; width: 100%; z-index: 11000; background: white; }
     .no-print { display: none !important; }
-    .qr-grid { grid-template-columns: repeat(3, 1fr) !important; }
+    .qr-grid { grid-template-columns: repeat(3, 1fr) !important; display: grid !important; }
     footer { display: none; }
   }
 </style>
@@ -122,12 +122,13 @@
     <div style="display:flex;gap:12px;align-items:center">
       <div class="logo">Sistema de Ponto</div>
       <button id="abrirConfigBtn" class="settings-btn hidden" title="Configurações de Acesso">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 2 2 2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 2 2 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 2 2 2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 2 2 2 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 2 2 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
       </button>
     </div>
     <div style="display:flex;gap:12px;align-items:center">
       <div id="clock">00:00:00</div>
       <div class="controls">
+        <button class="danger" id="limparPontosBtn" title="Limpar todos os registros de ponto">🗑️ Limpar Pontos</button>
         <button class="qr-btn" id="abrirScannerBtn">📸 Scanner</button>
         <button class="secondary" id="abrirGalleryBtn">🖼️ Crachás</button>
         <button class="download" id="baixarBtn">📥 Exportar Excel</button>
@@ -230,7 +231,7 @@
     <div class="no-print" style="display:flex; justify-content:space-between; margin-bottom:20px">
       <h3 style="margin:0">Galeria de Crachás</h3>
       <div style="display:flex; gap:10px">
-        <button class="add" onclick="window.print()">🖨️ Imprimir</button>
+        <button class="download" id="baixarCrachasBtn">💾 Baixar Crachás (PDF)</button>
         <button class="secondary" id="fecharGalleryBtn">Fechar</button>
       </div>
     </div>
@@ -255,7 +256,7 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
 import {
-  getFirestore, collection, setDoc, doc, deleteDoc, onSnapshot
+  getFirestore, collection, setDoc, doc, deleteDoc, onSnapshot, getDocs
 } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -494,6 +495,24 @@ function renderCrachas() {
     });
 }
 
+/* NOVO: LIMPAR PONTOS */
+document.getElementById('limparPontosBtn').onclick = async () => {
+    if(confirm("ATENÇÃO: Deseja apagar TODOS os registros de entrada e saída do sistema? Esta ação não pode ser desfeita.")) {
+        const querySnapshot = await getDocs(collection(db, "pontos"));
+        const promises = [];
+        querySnapshot.forEach((docSnap) => {
+            promises.push(deleteDoc(doc(db, "pontos", docSnap.id)));
+        });
+        await Promise.all(promises);
+        alert("Todos os registros de ponto foram removidos.");
+    }
+};
+
+/* NOVO: BAIXAR CRACHÁS */
+document.getElementById('baixarCrachasBtn').onclick = () => {
+    window.print();
+};
+
 document.getElementById('abrirGalleryBtn').onclick = () => { renderCrachas(); document.getElementById('qrGalleryModal').classList.remove('hidden'); };
 document.getElementById('fecharGalleryBtn').onclick = () => document.getElementById('qrGalleryModal').classList.add('hidden');
 document.getElementById('abrirScannerBtn').onclick = async () => {
@@ -532,6 +551,13 @@ function tick() {
     requestAnimationFrame(tick);
 }
 
+document.getElementById('baixarBtn').onclick = () => {
+    const ws = XLSX.utils.json_to_sheet(pontos);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Relatório");
+    XLSX.writeFile(wb, "Registros_Ponto.xlsx");
+};
+
 document.getElementById('abrirConfigBtn').onclick = () => document.getElementById('configModal').classList.remove('hidden');
 document.getElementById('fecharConfigBtn').onclick = () => document.getElementById('configModal').classList.add('hidden');
 document.getElementById('addColabBtn').onclick = () => document.getElementById('colabModal').classList.remove('hidden');
@@ -543,9 +569,14 @@ document.getElementById('logoutBtn').onclick = () => {
     document.getElementById('configModal').classList.add('hidden');
     document.getElementById('abrirConfigBtn').classList.add('hidden');
     document.getElementById('loginScreen').classList.remove('hidden');
-    if(!document.getElementById('rememberMe').checked) {
-        document.getElementById('user').value = '';
-        document.getElementById('pass').value = '';
+    
+    /* MODIFICAÇÃO: Limpar sempre ao sair para segurança */
+    document.getElementById('user').value = '';
+    document.getElementById('pass').value = '';
+    
+    /* Se o utilizador não quiser que lembre na próxima vez, desmarca a box */
+    if(!localStorage.getItem('ponto_user')) {
+        document.getElementById('rememberMe').checked = false;
     }
 };
 
