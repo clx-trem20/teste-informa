@@ -104,8 +104,9 @@
         <p style="color: var(--muted); font-size: 14px; margin-top: 5px;">Gerenciamento de Ponto Eletrônico</p>
       </div>
       
-      <input id="user" placeholder="Usuário" style="width:100%;padding:14px;margin:8px 0;border-radius:8px;border:1px solid #e5e7eb; box-sizing: border-box; font-size: 16px;">
-      <input id="pass" type="password" placeholder="Senha" style="width:100%;padding:14px;margin:8px 0;border-radius:8px;border:1px solid #e5e7eb; box-sizing: border-box; font-size: 16px;">
+      <!-- Campos com autocomplete desativado para evitar preenchimento automático indesejado -->
+      <input id="user" placeholder="Usuário" autocomplete="off" style="width:100%;padding:14px;margin:8px 0;border-radius:8px;border:1px solid #e5e7eb; box-sizing: border-box; font-size: 16px;">
+      <input id="pass" type="password" placeholder="Senha" autocomplete="new-password" style="width:100%;padding:14px;margin:8px 0;border-radius:8px;border:1px solid #e5e7eb; box-sizing: border-box; font-size: 16px;">
       
       <div style="display: flex; align-items: center; gap: 8px; margin: 15px 0; font-size: 15px; color: var(--muted); justify-content: start;">
         <input type="checkbox" id="rememberMe" style="width: 18px; height: 18px; cursor: pointer;">
@@ -570,18 +571,32 @@ document.getElementById('logoutBtn').onclick = () => {
     document.getElementById('abrirConfigBtn').classList.add('hidden');
     document.getElementById('loginScreen').classList.remove('hidden');
     
-    /* MODIFICAÇÃO: Limpar sempre ao sair para segurança */
     document.getElementById('user').value = '';
     document.getElementById('pass').value = '';
     
-    /* Se o utilizador não quiser que lembre na próxima vez, desmarca a box */
     if(!localStorage.getItem('ponto_user')) {
         document.getElementById('rememberMe').checked = false;
     }
 };
 
-const rU = localStorage.getItem('ponto_user'), rP = localStorage.getItem('ponto_pass');
-if(rU && rP) { document.getElementById('user').value = rU; document.getElementById('pass').value = rP; document.getElementById('rememberMe').checked = true; }
+/* MODIFICAÇÃO: Garantir limpeza total no carregamento inicial */
+window.onload = () => {
+    // Limpa campos para evitar que o navegador preencha dados antigos antes do JS rodar
+    document.getElementById('user').value = '';
+    document.getElementById('pass').value = '';
+
+    // Só preenche se o utilizador pediu explicitamente no passado
+    const rU = localStorage.getItem('ponto_user');
+    const rP = localStorage.getItem('ponto_pass');
+    
+    if(rU && rP) { 
+        document.getElementById('user').value = rU; 
+        document.getElementById('pass').value = rP; 
+        document.getElementById('rememberMe').checked = true; 
+    } else {
+        document.getElementById('rememberMe').checked = false;
+    }
+};
 
 setInterval(() => { 
     const clockEl = document.getElementById('clock');
