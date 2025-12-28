@@ -497,16 +497,29 @@ function tick() {
         const ctx = c.getContext("2d");
         ctx.drawImage(v, 0, 0);
         const code = jsQR(ctx.getImageData(0,0,c.width,c.height).data, c.width, c.height);
+        
         if(code && Date.now() - lastScanTime > 3000) {
             const colab = colaboradores.find(x => x.id === code.data);
             if(colab) {
                 lastScanTime = Date.now();
-                const hoje = new Date().toLocaleDateString('pt-BR');
-                const p = pontos.filter(x => x.idColab === colab.id && x.data === hoje).sort((a,b) => new Date(b.horarioISO) - new Date(b.horarioISO));
-                const tipo = (p.length > 0 && p[0].tipo === 'Entrada') ? 'Saída' : 'Entrada';
-                window.regManual(colab.id, tipo);
-                document.getElementById('scanner-feedback').textContent = `REGISTADO: ${tipo} - ${colab.nome}`;
-                setTimeout(() => { if(scanning) document.getElementById('scanner-feedback').textContent = "Aponte o QR Code..."; }, 2500);
+                
+                // Buscar histórico completo desse colaborador para verificar o último estado REAL
+                const meusPontos = pontos
+                    .filter(x => x.idColab === colab.id)
+                    .sort((a,b) => new Date(b.horarioISO) - new Date(a.horarioISO));
+                
+                // Lógica de Alternância Estrita:
+                // Se não tem pontos OU o último ponto foi "Saída" -> Novo ponto será "Entrada"
+                // Se o último ponto foi "Entrada" -> Novo ponto será "Saída"
+                const ultimoTipo = (meusPontos.length > 0) ? meusPontos[0].tipo : 'Saída';
+                const novoTipo = (ultimoTipo === 'Entrada') ? 'Saída' : 'Entrada';
+                
+                window.regManual(colab.id, novoTipo);
+                
+                document.getElementById('scanner-feedback').textContent = `REGISTADO: ${novoTipo} - ${colab.nome}`;
+                setTimeout(() => { 
+                    if(scanning) document.getElementById('scanner-feedback').textContent = "Aponte o QR Code..."; 
+                }, 2500);
             }
         }
     }
